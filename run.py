@@ -1,5 +1,6 @@
+import API
 import book
-from function import Search, tag, ranking
+from function import tag, ranking
 from API.Settings import *
 
 
@@ -29,7 +30,9 @@ def shell_search_book(inputs):
     """搜索书名下载小说"""
     if len(inputs) >= 2:
         start = time.time()
-        Search.SearchBook(inputs[1]).search_book()
+        for books in API.Book.search_book(inputs[1]).get('books'):
+            book_id = books.get('_id')
+            book.Book(book_id).book_information()
         end = time.time()
         print(f'下载耗时:{round(end - start, 2)} 秒')
     else:
@@ -63,7 +66,7 @@ def shell_tag(inputs):
 def shell_ranking(inputs):
     if len(inputs) >= 2:
         ranking_num = inputs[1]
-        ranking.Rank(ranking_num).rank_()
+        ranking.ranking_(ranking_num)
     else:
         ranking_dict = {'周榜': '1', '月榜': '2', '总榜': '3'}
         for key, Value in ranking_dict.items():

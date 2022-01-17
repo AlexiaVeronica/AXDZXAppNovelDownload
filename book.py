@@ -1,4 +1,4 @@
-from API import HttpUtil, api, UrlConstants
+import API
 from API.Settings import *
 
 
@@ -7,10 +7,8 @@ class Book:
 
     def __init__(self, book_id):
         self.path = os.path.join
-        self.novel_api = UrlConstants.BOOK_INFO_API
-        self.catalogue_api = UrlConstants.BOOK_CATALOGUE
-        self.response = HttpUtil.get(self.novel_api.format(book_id))
-        self.response_catalogue = HttpUtil.get(self.catalogue_api.format(book_id))
+        self.response = API.Book.novel_info(book_id)
+        self.catalogue = API.Book.catalogue(book_id)
         mkdir(Vars.cfg.data.get('save_book'))
         mkdir(Vars.cfg.data.get('config_book'))
 
@@ -52,7 +50,7 @@ class Book:
 
     def continue_chapter(self, book_name, book_id, author_name):
         """通过目录接口获取小说章节ID，并跳过已经存在的章节"""
-        catalogue_list = self.response_catalogue.get('mixToc').get('chapters')
+        catalogue_list = self.catalogue.get('mixToc').get('chapters')
         save_urls_list = []
         filename_list = os.listdir(self.path(Vars.cfg.data.get('config_book'), book_name))
         for _list in catalogue_list:
@@ -60,5 +58,5 @@ class Book:
             if link.split('/')[1].rjust(4, "0") + '-' in ''.join(filename_list):
                 continue
             save_urls_list.append(link)
-        download = api.Download(book_name, book_id, author_name)
+        download = API.api.Download(book_name, book_id, author_name)
         download.thread_pool(save_urls_list)

@@ -1,6 +1,6 @@
+import API
 import epub
 from function.instance import *
-from API import ApiConstants, HttpUtil
 from concurrent.futures import ThreadPoolExecutor
 
 
@@ -43,7 +43,8 @@ class Download:
 
     def download(self, chapter_id: str, file_number: int, progress_number: int, progress: int):
         print(f'下载进度:{progress_number}/{progress}', end="\r")
-        response = HttpUtil.get(ApiConstants.CHAPTER_API.format(chapter_id))
+
+        response = API.Chapter.download_chapter(chapter_id)
 
         chapter_title = del_title(response.get('chapter').get('title'))
         chapter_content = response.get('chapter').get('body')
@@ -53,17 +54,6 @@ class Download:
         write(self.path(Vars.cfg.data.get('config_book'), self.book_name, filename), 'w', title_body)
         time.sleep(0.1)
         return '{}下载成功'.format(chapter_title)
-
-    def get_type(self):
-        response = HttpUtil.get(ApiConstants.GET_TYPE_INFO).get('male')
-        type_dict = {}
-        for number, response_sort in enumerate(response):
-            print(response_sort)
-            number += 1
-            major = response_sort.get('major')
-            type_dict[number] = major
-
-        return type_dict
 
     def thread_pool(self, urls_list: list):
         progress = len(urls_list)

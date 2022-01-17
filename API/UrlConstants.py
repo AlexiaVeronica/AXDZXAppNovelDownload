@@ -6,7 +6,6 @@ BOOK_CATALOGUE = 'http://api.aixdzs.com/content/{}?view=chapter'  # 小说目录
 GET_TYPE_INFO = 'http://api.aixdzs.com/sort/lv2'
 CHAPTER_API = 'http://api.aixdzs.com/chapter/{}'
 SEARCH_API = 'http://api.aixdzs.com/book/search?query={}'
-
-
+RANKING_API = 'http://api.aixdzs.com/ranking/{}'
 
 # WEB_SITE = 'https://api.laomaoxs.com/'

@@ -2,8 +2,6 @@ import random
 import requests
 from function.instance import *
 
-
-
 headers = {
     "Keep-Alive": "300",
     "Connection": "Keep-Alive",
@@ -12,6 +10,7 @@ headers = {
 }
 
 session = requests.Session()
+
 
 def get(api_url):
     """封装get方法"""
@@ -22,7 +21,8 @@ def get(api_url):
         print("get请求错误:", e)
         pass
 
-def get_cover(api_url):
+
+def cover(api_url):
     """封装get方法"""
     headers['User_Agent'] = random.choice(Vars.cfg.data.get('USER_AGENT_LIST'))
     try:
@@ -30,6 +30,7 @@ def get_cover(api_url):
     except Exception as e:
         print("get请求错误:", e)
         pass
+
 
 def post(api_url, data=None):
     """封装post方法"""
@@ -39,6 +40,7 @@ def post(api_url, data=None):
         return session.post(api_url, data, headers=headers).json()
     except Exception as e:
         print("post请求错误:", e)
+
 
 def put(api_url, data=None):
     """封装put方法"""

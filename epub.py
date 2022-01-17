@@ -1,7 +1,6 @@
-import os
 from ebooklib import epub
 from function.instance import *
-from API import HttpUtil
+import API
 
 
 class EpubFile:
@@ -16,9 +15,9 @@ class EpubFile:
         self.epub.add_author(author_name)
 
     def cover(self):
-        cover_path = HttpUtil.get('http://119.91.108.170:88/api/img/acg.php?return=json')
-        cover_ = HttpUtil.get_cover(cover_path.get('acgurl'))
-        self.epub.set_cover(self.book_name + '.png', cover_)
+        cover_url = API.Cover.get_cover()
+        cover_path = API.Cover.download_cover(cover_url)
+        self.epub.set_cover(self.book_name + '.png', cover_path)
 
     def add_chapter(self, chapter_title, chapter_content, serial_number):
         content = chapter_content
