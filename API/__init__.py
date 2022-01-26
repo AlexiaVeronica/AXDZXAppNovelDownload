@@ -1,4 +1,4 @@
-from API.api import Download
+
 from API.Settings import *
 from API import HttpUtil, UrlConstants
 
