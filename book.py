@@ -105,7 +105,6 @@ class Book:
 
     def download(self, book_name, chapter_id, file_number, progress_number, progress):
         print(f'下载进度:{progress_number}/{progress}', end="\r")
-
         response = API.Chapter.download_chapter(chapter_id)
 
         chapter_title = del_title(response.get('chapter').get('title'))

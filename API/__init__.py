@@ -1,4 +1,3 @@
-
 from API.Settings import *
 from API import HttpUtil, UrlConstants
 
@@ -30,8 +29,8 @@ class Cover:
         return HttpUtil.get('http://119.91.108.170:88/api/img/acg.php?return=json')
 
     @staticmethod
-    def download_cover(cover_url: str):
-        return HttpUtil.cover(cover_url)
+    def download_cover(cover_josn: dict):
+        return HttpUtil.cover(cover_josn.get('acgurl'))
 
 
 class Tag:

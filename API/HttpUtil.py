@@ -2,51 +2,60 @@ import random
 import requests
 from function.instance import *
 
-headers = {
-    "Keep-Alive": "300",
-    "Connection": "Keep-Alive",
-    "Cache-Control": "no-cache",
-    "Accept-Encoding": "gzip",
-}
 
-session = requests.Session()
-
-
-def get(api_url):
-    """封装get方法"""
-    headers['User_Agent'] = random.choice(Vars.cfg.data.get('USER_AGENT_LIST'))
-    try:
-        return session.get(api_url, headers=headers).json()
-    except Exception as e:
-        print("get请求错误:", e)
-        pass
+def headers():
+    return {
+        "Keep-Alive": "300",
+        "Connection": "Keep-Alive",
+        "Cache-Control": "no-cache",
+        "Accept-Encoding": "gzip",
+        "User-Agent": random.choice(Vars.cfg.data.get('USER_AGENT_LIST'))
+    }
 
 
-def cover(api_jsno: dict):
-    headers['User_Agent'] = random.choice(Vars.cfg.data.get('USER_AGENT_LIST'))
-    try:
-        return requests.get(api_jsno.get('acgurl'), headers=headers).content
-    except Exception as e:
-        print("get请求错误:", e)
-        pass
+def get(api_url, max_retry=10):
+    for count in range(max_retry):
+        try:
+            return requests.get(api_url, headers=headers()).json()
+        except (OSError, TimeoutError, IOError) as error:
+            print(f"\nGet Error Retry {count + 1}: " + api_url)
+            time.sleep(0.5 * count)
+    else:
+        print(f"\nGet Failed:{api_url}\nTerminating......")
+        sys.exit(1)
 
 
-def post(api_url, data=None):
-    """封装post方法"""
-    headers['User_Agent'] = random.choice(
-        Vars.cfg.data.get('USER_AGENT_LIST'))
-    try:
-        return session.post(api_url, data, headers=headers).json()
-    except Exception as e:
-        print("post请求错误:", e)
+def post(api_url, data=None, max_retry=10):
+    for count in range(max_retry):
+        try:
+            return requests.post(api_url, data=data, headers=headers()).json()
+        except (OSError, TimeoutError, IOError) as error:
+            print(f"\nGet Error Retry {count + 1}: " + api_url)
+            time.sleep(0.5 * count)
+    else:
+        print(f"\nGet Failed:{api_url}\nTerminating......")
+        sys.exit(1)
 
 
-def put(api_url, data=None):
-    """封装put方法"""
-    headers['User_Agent'] = random.choice(
-        Vars.cfg.data.get('USER_AGENT_LIST'))
-    try:
-        return session.put(api_url, data, headers=headers).json()
-    except Exception as e:
-        print("put请求错误:", e)
+def cover(api_url: str, max_retry=10):
+    for count in range(max_retry):
+        try:
+            return requests.get(api_url, headers=headers()).content
+        except (OSError, TimeoutError, IOError) as error:
+            print(f"\nGet Error Retry {count + 1}: " + api_url)
+            time.sleep(0.5 * count)
+    else:
+        print(f"\nGet Failed:{api_url}\nTerminating......")
+        sys.exit(1)
 
+
+def put(api_url, data=None, max_retry=10):
+    for count in range(max_retry):
+        try:
+            return requests.put(api_url, data=data, headers=headers()).json()
+        except (OSError, TimeoutError, IOError) as error:
+            print(f"\nGet Error Retry {count + 1}: " + api_url)
+            time.sleep(0.5 * count)
+    else:
+        print(f"\nGet Failed:{api_url}\nTerminating......")
+        sys.exit(1)
