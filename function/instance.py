@@ -25,7 +25,7 @@ def makedirs(file_path: str):
 def time_(time_stamp: int):
     if type(time_stamp) is not int:
         time_stamp = int(time_stamp)
-    return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(_time_))
+    return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time_stamp))
 
 
 def inputs_(prompt, default=None):

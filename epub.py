@@ -5,14 +5,26 @@ import API
 
 class EpubFile:
     def __init__(self, book_id, book_name, author_name):
-        self.epub = epub.EpubBook()
+        self.book_id = book_id
         self.book_name = book_name
+        self.author_name = author_name
+        self.epub = epub.EpubBook()
         self.EpubList = list()
         self.path = os.path.join
         self.epub.set_language('zh-CN')
         self.epub.set_identifier(book_id)
         self.epub.set_title(book_name)
         self.epub.add_author(author_name)
+
+    def add_intro(self, author_name, up_time, up_chapter, intro, novel_tag):
+        intro_ = epub.EpubHtml(title='简介信息', file_name='0000-000000-intro.xhtml', lang='zh-CN')
+        intro_.content = '<html><head></head><body><h1>简介</h1>'
+        intro_.content += '<p>书籍书名:{}</p><p>书籍序号:{}</p>'.format(self.book_name, self.book_id)
+        intro_.content += '<p>书籍作者:{}</p><p>更新时间:{}</p>'.format(author_name, up_time)
+        intro_.content += '<p>最新章节:{}</p><p>系统标签:{}</p>'.format(up_chapter, novel_tag)
+        intro_.content += '<p>简介信息:</p>{}</body></html>'.format(intro)
+        self.epub.add_item(intro_)
+        self.EpubList.append(intro_)
 
     def cover(self):
         cover_url = API.Cover.get_cover()
@@ -78,4 +90,5 @@ class EpubFile:
                 '''
         nav_css = epub.EpubItem(uid="style_nav", file_name="style/nav.css", media_type="text/css", content=style)
         self.epub.add_item(nav_css)
-        epub.write_epub(self.path(Vars.cfg.data.get('save_book'), self.book_name, self.book_name + '.epub'), self.epub, {})
+        epub.write_epub(self.path(Vars.cfg.data.get('save_book'), self.book_name, self.book_name + '.epub'), self.epub,
+                        {})

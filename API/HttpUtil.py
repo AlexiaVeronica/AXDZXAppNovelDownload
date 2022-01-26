@@ -22,11 +22,10 @@ def get(api_url):
         pass
 
 
-def cover(api_url):
-    """封装get方法"""
+def cover(api_jsno: dict):
     headers['User_Agent'] = random.choice(Vars.cfg.data.get('USER_AGENT_LIST'))
     try:
-        return session.get(api_url, headers=headers).content
+        return requests.get(api_jsno.get('acgurl'), headers=headers).content
     except Exception as e:
         print("get请求错误:", e)
         pass
@@ -51,34 +50,3 @@ def put(api_url, data=None):
     except Exception as e:
         print("put请求错误:", e)
 
-
-def get_dict_value(date, keys, default=None):
-    keys_list = keys.split('.')
-    if isinstance(date, dict):
-        dictionary = dict(date)
-        for i in keys_list:
-            try:
-                if dictionary.get(i) != None:
-                    dict_values = dictionary.get(i)
-                elif dictionary.get(i) == None:
-                    dict_values = dictionary.get(int(i))
-            except:
-                return default
-            dictionary = dict_values
-        return dictionary
-    else:
-        try:
-            dictionary = dict(eval(date))
-            if isinstance(dictionary, dict):
-                for i in keys_list:
-                    try:
-                        if dictionary.get(i) != None:
-                            dict_values = dictionary.get(i)
-                        elif dictionary.get(i) == None:
-                            dict_values = dictionary.get(int(i))
-                    except:
-                        return default
-                    dictionary = dict_values
-                return dictionary
-        except:
-            return default

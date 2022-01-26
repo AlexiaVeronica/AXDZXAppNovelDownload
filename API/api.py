@@ -1,24 +1,20 @@
 import API
-import epub
 from function.instance import *
 from concurrent.futures import ThreadPoolExecutor
 
 
 class Download:
-    def __init__(self, book_name, book_id, author_name):
+    def __init__(self, epub, book_name, book_id):
         self.path = os.path.join
         self.book_name = book_name
         self.book_id = book_id
-        self.author_name = author_name
-        self.epub = epub.EpubFile(book_id, book_name, author_name)
+        self.epub = epub
 
     def filedir(self):
         config_path = self.path(Vars.cfg.data.get('config_book'), self.book_name)
         save_book_path = self.path(Vars.cfg.data.get('save_book'), self.book_name, '{}.txt'.format(self.book_name))
         filenames = os.listdir(config_path)  # 获取文本名
         filenames.sort(key=lambda x: int(x.split('-')[0]))  # 按照数字顺序排序文本
-
-        write(save_book_path, 'w')
         file = write(save_book_path, 'a')
 
         """遍历文件名"""
@@ -67,6 +63,5 @@ class Download:
                     file_number = url.split('/')[1]
                     executor.submit(self.download, url, file_number, progress_number, progress)
 
-            mkdir(self.path(Vars.cfg.data.get('save_book'), self.book_name))
             self.filedir()
             print(f'小说 {self.book_name} 下载完成')
