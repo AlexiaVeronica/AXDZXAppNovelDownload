@@ -1,9 +1,12 @@
+import ahttp
+
 import API
 import book
+from API import UrlConstants
 from function.instance import *
 
 
-class donwload_tag:
+class Tag:
     def __init__(self, tag_id):
         self.page = 1
         self.tag_id = tag_id
@@ -12,8 +15,7 @@ class donwload_tag:
         self.tag_name = Vars.cfg.data.get('tag')[tag_id]
 
     def get_type(self):
-        response = API.Tag.get_type()
-        for number, sort in enumerate(response):
+        for number, sort in enumerate(API.Tag.get_type()):
             print(sort)
             number += 1
             major = sort.get('major')
@@ -22,15 +24,17 @@ class donwload_tag:
 
     def get_tag(self):
         print("开始下载 {}分类".format(self.tag_name))
-        while True:
-            self.page += 20
-            response = API.Tag.tag_info(self.tag_id, self.tag_name, self.page)
-            if not response.get('books'):
+        api_url_list = [UrlConstants.TAG_API.format(self.tag_id, self.tag_name, i + 20) \
+                        for i in range(0, 10)]
+        session = ahttp.Session()
+        response = [session.get(api_url) for api_url in api_url_list]
+        for number, result_data in enumerate(ahttp.run(response)):
+            print('一共 {} 章, 下载进度:{:^3.0f}%'.format(
+                len(response), (number / len(response)) * 100), end='\r')
+            if not result_data.json()['books']:
                 print("{} 分类下载完毕".format(self.tag_name))
-                self.book_id_list.clear()
-                break
-
-            for data in response.get('books'):
+                return
+            for data in result_data.json().get('books'):
                 book_id = data.get('_id')
                 self.book_id_list.append(book_id)
                 print("开始下载第 {} 本\n".format(len(self.book_id_list)))

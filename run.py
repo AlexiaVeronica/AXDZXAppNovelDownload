@@ -1,7 +1,7 @@
 import API
 import book
-from function import tag, ranking
 from API.Settings import *
+from function import tag, ranking
 
 
 def agreed_read_readme():
@@ -58,7 +58,7 @@ def shell_tag(inputs):
         if not Vars.cfg.data.get('tag').get(tag_id):
             print(f"{tag_id} 标签号不存在\n", Vars.cfg.data.get('tag'))
         else:
-            tag.donwload_tag(tag_id).get_tag()
+            tag.Tag(tag_id).get_tag()
     else:
         print(Vars.cfg.data.get('tag'))
 
