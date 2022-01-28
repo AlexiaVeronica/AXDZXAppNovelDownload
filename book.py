@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
+
 import API
 import epub
 from API.Settings import *
@@ -74,9 +75,9 @@ class Book:
                     file_number = url.split('/')[1]
                     executor.submit(self.download, book_name, url, file_number, progress_number, progress)
             print(f'小说 {book_name} 下载完成')
-        self.filedir(book_name)
+        self.out_file_dir(book_name)
 
-    def filedir(self, book_name):
+    def out_file_dir(self, book_name):
         config_path = self.path(Vars.cfg.data.get('config_book'), book_name)
         save_book_path = self.path(Vars.cfg.data.get('save_book'), book_name, f'{book_name}.txt')
         filenames = os.listdir(config_path)  # 获取文本名
@@ -91,8 +92,7 @@ class Book:
             filepath = self.path(config_path, filename)  # 合并文本所在的路径
             """遍历单个文件，读取行数"""
             for content_line in open(filepath, encoding='UTF-8'):
-                if '长按' in content_line or '在线观看' in content_line or \
-                        '微信公众' in content_line or 'www' in content_line:
+                if '长按' or '在线观看' in '微信公众' or 'www' in content_line:
                     continue
                 if '　　?' in content_line:
                     content_line = content_line.replace('　　?', '　　')
