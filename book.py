@@ -56,19 +56,18 @@ class Book:
 
     def continue_chapter(self, book_name):
         """通过目录接口获取小说章节ID，并跳过已经存在的章节"""
-        save_urls_list = []
+        url_list = []
         filename_list = os.listdir(self.path(Vars.cfg.data.get('config_book'), book_name))
-        for _list in self.catalogue.get('mixToc').get('chapters'):
-            link = _list['link']
-            if link.split('/')[1].rjust(4, "0") + '-' in ''.join(filename_list):
-                continue
-            save_urls_list.append(link)
+        for chapters in self.catalogue.get('mixToc').get('chapters'):
+            chapter_link = chapters['link']
+            if chapter_link.split('/')[1].rjust(4, "0") + '-' not in ''.join(filename_list):
+                url_list.append(chapter_link)
 
-        progress = len(save_urls_list)
-        if not save_urls_list or progress != 0:
+        progress = len(url_list)
+        if not url_list or progress != 0:
             print('一共有{}章需要下载'.format(progress))
             with ThreadPoolExecutor(max_workers=Vars.cfg.data.get('Pool')) as executor:
-                for progress_number, url in enumerate(save_urls_list):
+                for progress_number, url in enumerate(url_list):
                     file_number = url.split('/')[1]
                     executor.submit(
                         self.download, book_name, url, file_number, progress_number, progress
