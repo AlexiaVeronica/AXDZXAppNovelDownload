@@ -31,8 +31,8 @@ class Book:
             mkdir(self.config_book)
             self.epub = epub.EpubFile(book_id, book_name, author_name)
 
-            self.show_book_info(book_name, author_name, book_state, word_count, book_updated,
-                                book_tag, last_chapter, book_intro)
+            self.show_book_info(book_name, author_name, book_state, word_count,
+                                book_updated, book_tag, last_chapter, book_intro)
             self.continue_chapter(book_name)
 
         else:
@@ -96,9 +96,7 @@ class Book:
 
     def download(self, book_name, chapter_id, file_number, page, progress):
         print('下载进度:{:^3.0f}%'.format((page / progress) * 100), end='\r')
-
         response = API.Chapter.download_chapter(chapter_id)
-
         chapter_title = del_title(response.get('chapter').get('title'))
         chapter_content = response.get('chapter').get('body')
 

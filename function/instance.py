@@ -1,9 +1,8 @@
-from .config import *
 import os
 import re
 import time
-import sys
-from rich import print
+
+from .config import *
 
 
 class Vars:
@@ -39,12 +38,12 @@ def inputs_(prompt, default=None):
 
 def del_title(title: str):
     """删去windowns不规范字符"""
-    return re.sub(r'[？?\*|“<>:/\\]', '', title)
+    return re.sub(r'[？?*|“<>:/\\]', '', title)
 
 
 def content_(content: str):
     return ''.join([re.sub(r'^\s*', "\n　　", content)
-                    for content in content.split("\n") if re.search(r'\S', content) != None])
+                    for content in content.split("\n") if re.search(r'\S', content) is not None])
 
 
 def write(path: str, mode: str, info=None):
@@ -53,14 +52,10 @@ def write(path: str, mode: str, info=None):
             with open(path, f'{mode}', encoding='UTF-8', newline='') as file:
                 file.writelines(info)
         except (UnicodeEncodeError, UnicodeDecodeError)as e:
-            print(e)
             with open(path, f'{mode}', encoding='gbk', newline='') as file:
                 file.writelines(info)
     else:
         try:
-            file = open(path, f'{mode}', encoding='UTF-8')
-            return file
+            return open(path, f'{mode}', encoding='UTF-8')
         except (UnicodeEncodeError, UnicodeDecodeError) as e:
-            print(e)
-            file = open(path, f'{mode}', encoding='gbk')
-            return file
+            return open(path, f'{mode}', encoding='gbk')

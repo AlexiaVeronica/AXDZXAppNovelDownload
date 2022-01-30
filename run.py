@@ -97,12 +97,12 @@ def shell_list(inputs):
 
 
 def shell():
-    print(Vars.cfg.data.get('help'))
-    agreed_read_readme()
     if len(sys.argv) > 1:
+        command_line = True
         inputs = sys.argv[1:]
-
     else:
+        command_line = False
+        print(Vars.cfg.data.get('help'))
         inputs = re.split('\\s+', inputs_('>').strip())
     while True:
         if inputs[0].startswith('q') or inputs[0] == '--quit':
@@ -123,8 +123,12 @@ def shell():
             get_pool(inputs)
         else:
             print(inputs[0], '不是有效命令')
+        if command_line is True:
+            sys.exit(1)
         inputs = re.split('\\s+', inputs_('>').strip())
 
 
 if __name__ == '__main__':
+    agreed_read_readme()
+
     shell()
