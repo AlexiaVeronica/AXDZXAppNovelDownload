@@ -31,7 +31,7 @@ class Book:
 
             self.show_book_info(book_name, author_name, book_state, word_count, book_updated,
                                 book_tag, last_chapter, book_intro)
-            self.continue_chapter(book_name, book_id)
+            self.continue_chapter(book_name)
 
         else:
             print('输入的小说序号不存在！')
@@ -54,57 +54,54 @@ class Book:
         write(save_path, 'w', f'{show_info}简介信息: {book_intro}\n')
         self.epub.add_intro(author_name, book_updated, last_chapter, book_intro, book_tag)
 
-    def continue_chapter(self, book_name, book_id):
+    def continue_chapter(self, book_name):
         """通过目录接口获取小说章节ID，并跳过已经存在的章节"""
-        catalogue_list = self.catalogue.get('mixToc').get('chapters')
         save_urls_list = []
         filename_list = os.listdir(self.path(Vars.cfg.data.get('config_book'), book_name))
-        for _list in catalogue_list:
+        for _list in self.catalogue.get('mixToc').get('chapters'):
             link = _list['link']
             if link.split('/')[1].rjust(4, "0") + '-' in ''.join(filename_list):
                 continue
             save_urls_list.append(link)
 
         progress = len(save_urls_list)
-        if progress == 0 or save_urls_list == []:
-            print(f'小说 {book_name} 没有需要下载的章节')
-        else:
+        if not save_urls_list or progress != 0:
             print('一共有{}章需要下载'.format(progress))
             with ThreadPoolExecutor(max_workers=Vars.cfg.data.get('Pool')) as executor:
                 for progress_number, url in enumerate(save_urls_list):
                     file_number = url.split('/')[1]
-                    executor.submit(self.download, book_name, url, file_number, progress_number, progress)
-            print(f'小说 {book_name} 下载完成')
+                    executor.submit(
+                        self.download, book_name, url, file_number, progress_number, progress
+                    )
+
         self.out_file_dir(book_name)
+        print(f'小说 {book_name} 本地档案合并完毕')
 
     def out_file_dir(self, book_name):
         config_path = self.path(Vars.cfg.data.get('config_book'), book_name)
         save_book_path = self.path(Vars.cfg.data.get('save_book'), book_name, f'{book_name}.txt')
-        filenames = os.listdir(config_path)  # 获取文本名
-        filenames.sort(key=lambda x: int(x.split('-')[0]))  # 按照数字顺序排序文本
+        file_name_list = os.listdir(config_path)  # 获取文本名
+        file_name_list.sort(key=lambda x: int(x.split('-')[0]))  # 按照数字顺序排序文本
         file = write(save_book_path, 'a')
 
         """遍历文件名"""
-        for filename in filenames:
-            serial_number = filename.split('-')[0]
-            chapter_title = filename.split('-')[1].replace('.txt', '')
+        for file_name in file_name_list:
             chapter_content = ''
-            filepath = self.path(config_path, filename)  # 合并文本所在的路径
-            """遍历单个文件，读取行数"""
-            for content_line in open(filepath, encoding='UTF-8'):
-                if '长按' or '在线观看' in '微信公众' or 'www' in content_line:
-                    continue
-                if '　　?' in content_line:
-                    content_line = content_line.replace('　　?', '　　')
-                chapter_content += f'\n<p>{content_line}</p>'
+            """遍历合并文本所在的路径的单个文件，读取行数"""
+            for content_line in open(self.path(config_path, file_name), encoding='UTF-8'):
                 file.writelines(content_line)
+                chapter_content += f'\n<p>{content_line}</p>'
+            self.epub.add_chapter(
+                file_name.split('-')[1].replace('.txt', ''), chapter_content,
+                file_name.split('-')[0]
+            )
             file.write('\n')
-            self.epub.add_chapter(chapter_title, chapter_content, serial_number)
         file.close()
         self.epub.save()
 
-    def download(self, book_name, chapter_id, file_number, progress_number, progress):
-        print(f'下载进度:{progress_number}/{progress}', end="\r")
+    def download(self, book_name, chapter_id, file_number, page, progress):
+        print('下载进度:{:^3.0f}%'.format((page / progress) * 100), end='\r')
+
         response = API.Chapter.download_chapter(chapter_id)
 
         chapter_title = del_title(response.get('chapter').get('title'))

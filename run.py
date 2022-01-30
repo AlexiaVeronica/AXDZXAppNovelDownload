@@ -58,7 +58,7 @@ def shell_tag(inputs):
         if not Vars.cfg.data.get('tag').get(tag_id):
             print(f"{tag_id} 标签号不存在\n", Vars.cfg.data.get('tag'))
         else:
-            tag.Tag(tag_id).get_tag()
+            tag.Tag(tag_id).tag_information()
     else:
         print(Vars.cfg.data.get('tag'))
 
@@ -101,6 +101,7 @@ def shell():
     agreed_read_readme()
     if len(sys.argv) > 1:
         inputs = sys.argv[1:]
+
     else:
         inputs = re.split('\\s+', inputs_('>').strip())
     while True:

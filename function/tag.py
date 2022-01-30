@@ -22,20 +22,17 @@ class Tag:
             self.type_dict[number] = major
         return self.type_dict
 
-    def get_tag(self):
-        print("开始下载 {}分类".format(self.tag_name))
-        api_url_list = [UrlConstants.TAG_API.format(self.tag_id, self.tag_name, i + 20) \
-                        for i in range(0, 10)]
-        session = ahttp.Session()
-        response = [session.get(api_url) for api_url in api_url_list]
-        for number, result_data in enumerate(ahttp.run(response)):
-            print('一共 {} 章, 下载进度:{:^3.0f}%'.format(
-                len(response), (number / len(response)) * 100), end='\r')
-            if not result_data.json()['books']:
-                print("{} 分类下载完毕".format(self.tag_name))
-                return
-            for data in result_data.json().get('books'):
-                book_id = data.get('_id')
-                self.book_id_list.append(book_id)
-                print("开始下载第 {} 本\n".format(len(self.book_id_list)))
-                book.Book(book_id).book_information()
+    def tag_information(self):
+        api_url_list = [
+            UrlConstants.TAG_API.format(self.tag_id, self.tag_name, i + 20) for i in range(0, 10)
+        ]
+        for result_data in ahttp.run([ahttp.get(api_url) for api_url in api_url_list]):
+            tag_info_list = result_data.json()['books']
+            if tag_info_list and tag_info_list != []:
+                for tag_info_data in tag_info_list:
+                    novel_id = tag_info_data.get('_id')
+                    self.book_id_list.append(novel_id)
+                    print("{}分类 第{}本\n".format(self.tag_name, len(self.book_id_list)))
+                    book.Book(novel_id).book_information()
+            else:
+                print("{} 分类下载完毕, 一共下载 {} 本".format(self.tag_name, self.book_id_list))
