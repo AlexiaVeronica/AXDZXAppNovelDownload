@@ -13,8 +13,8 @@ class Book:
         self.path = os.path.join
         self.response = API.Book.novel_info(book_id)
         self.catalogue = API.Book.catalogue(book_id)
-        mkdir(Vars.cfg.data.get('save_book'))
-        mkdir(Vars.cfg.data.get('config_book'))
+        self.save_book = Vars.cfg.data.get('save_book')
+        self.config_book = Vars.cfg.data.get('config_book')
 
     def book_information(self):
         if self.response.get('_id'):
@@ -27,6 +27,8 @@ class Book:
             word_count = self.response.get('wordCount')
             book_updated = self.response.get('updated')
             last_chapter = self.response.get('lastChapter')
+            mkdir(self.save_book)
+            mkdir(self.config_book)
             self.epub = epub.EpubFile(book_id, book_name, author_name)
 
             self.show_book_info(book_name, author_name, book_state, word_count, book_updated,
@@ -38,7 +40,7 @@ class Book:
 
     def show_book_info(self, book_name, author_name, book_state, word_count,
                        book_updated, book_tag, last_chapter, book_intro):
-        makedirs(self.path(Vars.cfg.data.get('config_book'), book_name))
+        makedirs(self.path(self.config_book, book_name))
         show_info = ''
         show_info += '书籍书名: {}\n'.format(book_name)
         show_info += '书籍作者: {}\n'.format(author_name)
@@ -49,39 +51,32 @@ class Book:
         show_info += '最新章节: {}\n'.format(last_chapter)
         print(show_info)
 
-        mkdir(self.path(Vars.cfg.data.get('save_book'), book_name))
-        save_path = self.path(Vars.cfg.data.get('save_book'), book_name, f'{book_name}.txt')
+        mkdir(self.path(self.save_book, book_name))
+        save_path = self.path(self.save_book, book_name, f'{book_name}.txt')
         write(save_path, 'w', f'{show_info}简介信息: {book_intro}\n')
         self.epub.add_intro(author_name, book_updated, last_chapter, book_intro, book_tag)
 
     def continue_chapter(self, book_name):
         """通过目录接口获取小说章节ID，并跳过已经存在的章节"""
         url_list = []
-        filename_list = os.listdir(self.path(Vars.cfg.data.get('config_book'), book_name))
+        filename_list = os.listdir(self.path(self.config_book, book_name))
         for chapters in self.catalogue.get('mixToc').get('chapters'):
             chapter_link = chapters['link']
             if chapter_link.split('/')[1].rjust(4, "0") + '-' not in ''.join(filename_list):
                 url_list.append(chapter_link)
 
         progress = len(url_list)
-        if not url_list or progress != 0:
-            print('一共有{}章需要下载'.format(progress))
-            with ThreadPoolExecutor(max_workers=Vars.cfg.data.get('Pool')) as executor:
+        with ThreadPoolExecutor(max_workers=Vars.cfg.data.get('Pool')) as executor:
+            if progress != 0:
+                print('一共有{}章需要下载'.format(progress))
                 for progress_number, url in enumerate(url_list):
                     file_number = url.split('/')[1]
-                    executor.submit(
-                        self.download, book_name, url, file_number, progress_number, progress
-                    )
+                    executor.submit(self.download, book_name, url, file_number, progress_number, progress)
 
-        self.out_file_dir(book_name)
-        print(f'小说 {book_name} 本地档案合并完毕')
-
-    def out_file_dir(self, book_name):
-        config_path = self.path(Vars.cfg.data.get('config_book'), book_name)
-        save_book_path = self.path(Vars.cfg.data.get('save_book'), book_name, f'{book_name}.txt')
-        file_name_list = os.listdir(config_path)  # 获取文本名
+        config_path = self.path(self.config_book, book_name)
+        file_name_list = os.listdir(self.path(self.config_book, book_name))  # 获取文本名
         file_name_list.sort(key=lambda x: int(x.split('-')[0]))  # 按照数字顺序排序文本
-        file = write(save_book_path, 'a')
+        file = write(self.path(self.save_book, book_name, f'{book_name}.txt'), 'a')
 
         """遍历文件名"""
         for file_name in file_name_list:
@@ -97,6 +92,7 @@ class Book:
             file.write('\n')
         file.close()
         self.epub.save()
+        print(f'小说 {book_name} 本地档案合并完毕')
 
     def download(self, book_name, chapter_id, file_number, page, progress):
         print('下载进度:{:^3.0f}%'.format((page / progress) * 100), end='\r')
@@ -108,6 +104,6 @@ class Book:
 
         title_body = "\n\n\n{}\n\n{}".format(chapter_title, chapter_content)  # 标题加正文
         filename = str(file_number).rjust(4, "0") + '-' + chapter_title + '.txt'
-        write(self.path(Vars.cfg.data.get('config_book'), book_name, filename), 'w', title_body)
+        write(self.path(self.config_book, book_name, filename), 'w', title_body)
         time.sleep(0.1)
         return '{}下载成功'.format(chapter_title)
