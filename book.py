@@ -1,6 +1,8 @@
 import ahttp
 import API
 import epub
+import asyncio
+from API import file_io
 from API.Settings import *
 
 
@@ -58,9 +60,10 @@ class Book:
             self.epub.add_intro(author_name, book_updated, last_chapter, book_intro, book_tag)
 
     def continue_chapter(self, book_name):
-        """通过目录接口获取小说章节ID，并跳过已经存在的章节"""
         filename_list = ''.join(os.listdir(self.path(self.config_book, book_name)))
         chapters_url = self.catalogue.get('mixToc').get('chapters')
+        if chapters_url is None:
+            return '书籍获取失败'
         url_list = [
             chapters.get('link') for chapters in chapters_url
             if chapters.get('link').split('/')[1].rjust(4, "0") + '-' not in filename_list
@@ -83,11 +86,13 @@ class Book:
 
         for file_name in file_name_list:  # 遍历文件名
             """遍历合并文本所在的路径的单个文件"""
-            content = write(self.path(self.path(self.config_book, book_name), file_name), 'r').read()
+
+            event_loop = asyncio.get_event_loop()
+            content = event_loop.run_until_complete(file_io.async_read(self.path(self.config_book, book_name, file_name)))
             self.epub.add_chapter(
                 file_name.split('-')[1].replace('.txt', ''), content.replace('\n', '</p>\r\n<p>'),
                 file_name.split('-')[0]
             )
-            write(self.path(self.save_book, book_name, f'{book_name}.txt'), 'a', content)
+            event_loop.run_until_complete(file_io.async_write(self.path(self.save_book, book_name, f'{book_name}.txt'), content))
         self.epub.save()
         print(book_name, '本地档案合并完毕')
