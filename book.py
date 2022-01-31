@@ -38,8 +38,10 @@ class Book:
         else:
             print('输入的小说序号不存在！')
 
-    def show_book_info(self, book_name, author_name, book_state, word_count,
-                       book_updated, book_tag, last_chapter, book_intro):
+    def show_book_info(
+            self, book_name, author_name, book_state, word_count,
+            book_updated, book_tag, last_chapter, book_intro
+    ):
         makedirs(self.path(self.config_book, book_name))
         show_info = ''
         show_info += '书籍书名: {}\n'.format(book_name)
@@ -66,13 +68,12 @@ class Book:
                 url_list.append(chapter_link)
 
         progress = len(url_list)
-        with ThreadPoolExecutor(max_workers=Vars.cfg.data.get('Pool')) as executor:
-            if progress != 0:
-                print('一共有{}章需要下载'.format(progress))
-                for progress_number, url in enumerate(url_list):
-                    file_number = url.split('/')[1]
-                    executor.submit(self.download, book_name, url, file_number, progress_number, progress)
-
+        executor = ThreadPoolExecutor(max_workers=Vars.cfg.data.get('Pool'))
+        if progress != 0:
+            print('一共有{}章需要下载'.format(progress))
+        for progress_number, url in enumerate(url_list):
+            file_number = url.split('/')[1]
+            executor.submit(self.download, book_name, url, file_number, progress_number, progress)
         config_path = self.path(self.config_book, book_name)
         file_name_list = os.listdir(self.path(self.config_book, book_name))  # 获取文本名
         file_name_list.sort(key=lambda x: int(x.split('-')[0]))  # 按照数字顺序排序文本
@@ -80,16 +81,13 @@ class Book:
 
         """遍历文件名"""
         for file_name in file_name_list:
-            chapter_content = ''
-            """遍历合并文本所在的路径的单个文件，读取行数"""
-            for content_line in open(self.path(config_path, file_name), encoding='UTF-8'):
-                file.writelines(content_line)
-                chapter_content += f'\n<p>{content_line}</p>'
+            """遍历合并文本所在的路径的单个文件"""
+            content = write(self.path(config_path, file_name), 'r').read()
+            file.write(content)
             self.epub.add_chapter(
-                file_name.split('-')[1].replace('.txt', ''), chapter_content,
+                file_name.split('-')[1].replace('.txt', ''), content.replace('\n', '</p>\r\n<p>'),
                 file_name.split('-')[0]
             )
-            file.write('\n')
         file.close()
         self.epub.save()
         print(f'小说 {book_name} 本地档案合并完毕')

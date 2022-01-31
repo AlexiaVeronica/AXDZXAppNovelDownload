@@ -31,8 +31,7 @@ class EpubFile:
         cover_path = API.Cover.download_cover(cover_url)
         self.epub.set_cover(self.book_name + '.png', cover_path)
 
-    def add_chapter(self, chapter_title, chapter_content, serial_number):
-        content = chapter_content
+    def add_chapter(self, chapter_title, content, serial_number):
         default_style = '''
         body {font-size:100%;}
         p{
@@ -47,9 +46,12 @@ class EpubFile:
         '''
         default_css = epub.EpubItem(uid="style_default", file_name="style/default.css", media_type="text/css",
                                     content=default_style)
-        # self.epub.add_item(default_css)
-        chapter_serial = epub.EpubHtml(title=chapter_title, file_name='chapter_{}'.format(serial_number) + '.xhtml',
-                                       lang='zh-CN', uid='chapter_{}'.format(serial_number))
+
+        chapter_serial = epub.EpubHtml(
+            title=chapter_title, file_name=str(serial_number).rjust(4, "0") + '-' + chapter_title + '.xhtml',
+            lang='zh-CN', uid='chapter_{}'.format(serial_number)
+        )
+
         chapter_serial.content = content
         chapter_serial.add_item(default_css)
         self.epub.add_item(chapter_serial)
