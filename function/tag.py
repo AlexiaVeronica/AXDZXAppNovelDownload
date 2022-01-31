@@ -1,8 +1,6 @@
 import ahttp
-
 import API
 import book
-from API import UrlConstants
 from function.instance import *
 
 
@@ -23,10 +21,11 @@ class Tag:
         return self.type_dict
 
     def tag_information(self):
-        api_url_list = [
-            UrlConstants.TAG_API.format(self.tag_id, self.tag_name, i + 20) for i in range(0, 10)
+
+        response_list = [
+            API.Tag.tag_info(self.tag_id, self.tag_name, i + 20) for i in range(5000)
         ]
-        for result_data in ahttp.run([ahttp.get(api_url) for api_url in api_url_list]):
+        for result_data in ahttp.run(response_list):
             tag_info_list = result_data.json()['books']
             if tag_info_list and tag_info_list != []:
                 for tag_info_data in tag_info_list:

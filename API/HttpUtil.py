@@ -42,7 +42,7 @@ def post(api_url, data=None, max_retry=10):
 def cover(api_url: str, max_retry=10):
     for count in range(max_retry):
         try:
-            return requests.get(api_url, headers=headers()).content
+            return requests.get(api_url, headers=headers())
         except (OSError, TimeoutError, IOError) as error:
             print(f"\nGet Error Retry {count + 1}: " + api_url)
             time.sleep(0.5 * count)

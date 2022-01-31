@@ -60,12 +60,14 @@ class Book:
 
     def continue_chapter(self, book_name):
         """通过目录接口获取小说章节ID，并跳过已经存在的章节"""
-        url_list = []
-        filename_list = os.listdir(self.path(self.config_book, book_name))
-        for chapters in self.catalogue.get('mixToc').get('chapters'):
-            chapter_link = chapters['link']
-            if chapter_link.split('/')[1].rjust(4, "0") + '-' not in ''.join(filename_list):
-                url_list.append(chapter_link)
+        filename_list = ''.join(os.listdir(self.path(self.config_book, book_name)))
+        chapters_url = self.catalogue.get('mixToc').get('chapters')
+        if chapters_url is None:
+            return '书籍信息获取失败'
+        url_list = [
+            chapters.get('link') for chapters in chapters_url
+            if chapters.get('link').split('/')[1].rjust(4, "0") + '-' not in filename_list
+        ]
 
         progress = len(url_list)
         with ThreadPoolExecutor(max_workers=Vars.cfg.data.get('Pool')) as executor:
