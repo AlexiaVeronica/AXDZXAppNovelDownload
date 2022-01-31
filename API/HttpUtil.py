@@ -13,12 +13,14 @@ def headers():
     }
 
 
+session = requests.session()
+
+
 def get(api_url, max_retry=10):
     for count in range(max_retry):
         try:
-            return requests.get(api_url, headers=headers()).json()
+            return session.get(api_url, headers=headers()).json()
         except (OSError, TimeoutError, IOError) as error:
-            print(f"\nGet Error Retry {count + 1}: " + api_url)
             time.sleep(0.5 * count)
     else:
         print(f"\nGet Failed:{api_url}\nTerminating......")
@@ -28,7 +30,7 @@ def get(api_url, max_retry=10):
 def post(api_url, data=None, max_retry=10):
     for count in range(max_retry):
         try:
-            return requests.post(api_url, data=data, headers=headers()).json()
+            return session.post(api_url, data=data, headers=headers()).json()
         except (OSError, TimeoutError, IOError) as error:
             print(f"\nGet Error Retry {count + 1}: " + api_url)
             time.sleep(0.5 * count)
@@ -52,7 +54,7 @@ def cover(api_url: str, max_retry=10):
 def put(api_url, data=None, max_retry=10):
     for count in range(max_retry):
         try:
-            return requests.put(api_url, data=data, headers=headers()).json()
+            return session.put(api_url, data=data, headers=headers()).json()
         except (OSError, TimeoutError, IOError) as error:
             print(f"\nGet Error Retry {count + 1}: " + api_url)
             time.sleep(0.5 * count)

@@ -1,8 +1,7 @@
 import os
 import re
 import time
-
-from .config import *
+from function.config import *
 
 
 class Vars:

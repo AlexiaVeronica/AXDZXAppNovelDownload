@@ -32,7 +32,7 @@ class Tag:
                 for tag_info_data in tag_info_list:
                     novel_id = tag_info_data.get('_id')
                     self.book_id_list.append(novel_id)
-                    print("{}分类 第{}本\n".format(self.tag_name, len(self.book_id_list)))
+                    print("\n\n{}分类 第{}本\n".format(self.tag_name, len(self.book_id_list)))
                     book.Book(novel_id).book_information()
             else:
                 print("{} 分类下载完毕, 一共下载 {} 本".format(self.tag_name, self.book_id_list))

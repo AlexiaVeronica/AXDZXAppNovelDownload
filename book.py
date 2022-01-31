@@ -68,12 +68,12 @@ class Book:
                 url_list.append(chapter_link)
 
         progress = len(url_list)
-        executor = ThreadPoolExecutor(max_workers=Vars.cfg.data.get('Pool'))
-        if progress != 0:
-            print('一共有{}章需要下载'.format(progress))
-        for progress_number, url in enumerate(url_list):
-            file_number = url.split('/')[1]
-            executor.submit(self.download, book_name, url, file_number, progress_number, progress)
+        with ThreadPoolExecutor(max_workers=Vars.cfg.data.get('Pool')) as executor:
+            if progress != 0:
+                print('一共有{}章需要下载'.format(progress))
+            for progress_number, url in enumerate(url_list):
+                file_number = url.split('/')[1]
+                executor.submit(self.download, book_name, url, file_number, progress_number, progress)
         config_path = self.path(self.config_book, book_name)
         file_name_list = os.listdir(self.path(self.config_book, book_name))  # 获取文本名
         file_name_list.sort(key=lambda x: int(x.split('-')[0]))  # 按照数字顺序排序文本
@@ -90,16 +90,14 @@ class Book:
             )
         file.close()
         self.epub.save()
-        print(f'小说 {book_name} 本地档案合并完毕')
+        print(book_name, '本地档案合并完毕')
 
     def download(self, book_name, chapter_id, file_number, page, progress):
-        print('下载进度:{:^3.0f}%'.format((page / progress) * 100), end='\r')
         response = API.Chapter.download_chapter(chapter_id)
         chapter_title = del_title(response.get('chapter').get('title'))
         chapter_content = response.get('chapter').get('body')
-
         title_body = "\n\n\n{}\n\n{}".format(chapter_title, chapter_content)  # 标题加正文
         filename = str(file_number).rjust(4, "0") + '-' + chapter_title + '.txt'
         write(self.path(self.config_book, book_name, filename), 'w', title_body)
+        print('下载进度:{:^3.0f}%'.format((page / progress) * 100), end='\r')
         time.sleep(0.1)
-        return '{}下载成功'.format(chapter_title)

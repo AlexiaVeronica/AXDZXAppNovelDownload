@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+from rich import print
 
 class Config:
     file_path = None

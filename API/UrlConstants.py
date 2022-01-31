@@ -1,5 +1,4 @@
-
-
+WEB_SITE = "http://api.aixdzs.com/"
 TAG_API = "http://api.aixdzs.com/book-sort?gender={}&type=hot&major={}&minor=&start={}&limit=20"
 BOOK_INFO_API = 'https://api.aixdzs.com/book/{}'  # 小说信息接口
 BOOK_CATALOGUE = 'http://api.aixdzs.com/content/{}?view=chapter'  # 小说目录接口
@@ -8,4 +7,3 @@ CHAPTER_API = 'http://api.aixdzs.com/chapter/{}'
 SEARCH_API = 'http://api.aixdzs.com/book/search?query={}'
 RANKING_API = 'http://api.aixdzs.com/ranking/{}'
 
-# WEB_SITE = 'https://api.laomaoxs.com/'
