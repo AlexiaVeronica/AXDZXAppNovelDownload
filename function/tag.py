@@ -21,17 +21,15 @@ class Tag:
         return self.type_dict
 
     def tag_information(self):
-
-        response_list = [
-            API.Tag.tag_info(self.tag_id, self.tag_name, i + 20) for i in range(5000)
-        ]
-        for result_data in ahttp.run(response_list):
-            tag_info_list = result_data.json()['books']
-            if tag_info_list and tag_info_list != []:
-                for tag_info_data in tag_info_list:
+        while True:
+            self.page += 20
+            response = API.Tag.tag_info(self.tag_id, self.tag_name, self.page)['books']
+            if response and response != []:
+                for tag_info_data in response:
                     novel_id = tag_info_data.get('_id')
                     self.book_id_list.append(novel_id)
                     print("\n\n{}分类 第{}本\n".format(self.tag_name, len(self.book_id_list)))
                     book.Book(novel_id).book_information()
             else:
                 print("{} 分类下载完毕, 一共下载 {} 本".format(self.tag_name, self.book_id_list))
+                break

@@ -26,7 +26,8 @@ class Book:
 class Chapter:
     @staticmethod
     def download_chapter(chapter_id: str):
-        return get(UrlConstants.CHAPTER_API.format(chapter_id))
+        api_url = UrlConstants.WEB_SITE + UrlConstants.CHAPTER_API.format(chapter_id)
+        return ahttp.get(api_url)
 
 
 class Cover:
@@ -47,8 +48,7 @@ class Tag:
 
     @staticmethod
     def tag_info(tag_id, tag_name, page):
-        api_url = UrlConstants.WEB_SITE + UrlConstants.TAG_API.format(tag_id, tag_name, page)
-        return ahttp.get(api_url)
+        return get(UrlConstants.TAG_API.format(tag_id, tag_name, page))
 
     @staticmethod
     def ranking(ranking_num):

@@ -1,5 +1,4 @@
-from concurrent.futures import ThreadPoolExecutor
-
+import ahttp
 import API
 import epub
 from API.Settings import *
@@ -51,55 +50,44 @@ class Book:
         show_info += '更新时间: {}\n'.format(book_updated)
         show_info += '书籍标签: {}\n'.format(book_tag)
         show_info += '最新章节: {}\n'.format(last_chapter)
-        print(show_info)
-
-        mkdir(self.path(self.save_book, book_name))
-        save_path = self.path(self.save_book, book_name, f'{book_name}.txt')
-        write(save_path, 'w', f'{show_info}简介信息: {book_intro}\n')
-        self.epub.add_intro(author_name, book_updated, last_chapter, book_intro, book_tag)
+        if last_chapter is not None:
+            print(show_info)
+            mkdir(self.path(self.save_book, book_name))
+            save_path = self.path(self.save_book, book_name, f'{book_name}.txt')
+            write(save_path, 'w', f'{show_info}简介信息: {book_intro}\n')
+            self.epub.add_intro(author_name, book_updated, last_chapter, book_intro, book_tag)
 
     def continue_chapter(self, book_name):
         """通过目录接口获取小说章节ID，并跳过已经存在的章节"""
         filename_list = ''.join(os.listdir(self.path(self.config_book, book_name)))
         chapters_url = self.catalogue.get('mixToc').get('chapters')
-        if chapters_url is None:
-            return '书籍信息获取失败'
         url_list = [
             chapters.get('link') for chapters in chapters_url
             if chapters.get('link').split('/')[1].rjust(4, "0") + '-' not in filename_list
         ]
+        if len(url_list) != 0 and url_list != []:
+            chapter_dict = {
+                'chapter_id': [API.Chapter.download_chapter(url) for url in url_list],
+                'file_id': [url.split('/')[1] for url in url_list]
+            }
 
-        progress = len(url_list)
-        with ThreadPoolExecutor(max_workers=Vars.cfg.data.get('Pool')) as executor:
-            if progress != 0:
-                print('一共有{}章需要下载'.format(progress))
-            for progress_number, url in enumerate(url_list):
-                file_number = url.split('/')[1]
-                executor.submit(self.download, book_name, url, file_number, progress_number, progress)
-        config_path = self.path(self.config_book, book_name)
+            for page, data in enumerate(ahttp.run(chapter_dict['chapter_id'], pool=40, order=True)):
+                chapter_title = del_title(data.json()['chapter']['title'])
+                content = "\n\n\n{}\n\n{}".format(chapter_title, data.json()['chapter']['body'])
+                filename = str(chapter_dict['file_id'][page]).rjust(4, "0") + '-' + chapter_title + '.txt'
+                write(self.path(self.config_book, book_name, filename), 'w', content)
+                print('下载进度:{:^3.0f}%'.format((page / len(url_list)) * 100), end='\r')
+
         file_name_list = os.listdir(self.path(self.config_book, book_name))  # 获取文本名
         file_name_list.sort(key=lambda x: int(x.split('-')[0]))  # 按照数字顺序排序文本
-        file = write(self.path(self.save_book, book_name, f'{book_name}.txt'), 'a')
 
-        """遍历文件名"""
-        for file_name in file_name_list:
+        for file_name in file_name_list:  # 遍历文件名
             """遍历合并文本所在的路径的单个文件"""
-            content = write(self.path(config_path, file_name), 'r').read()
-            file.write(content)
+            content = write(self.path(self.path(self.config_book, book_name), file_name), 'r').read()
             self.epub.add_chapter(
                 file_name.split('-')[1].replace('.txt', ''), content.replace('\n', '</p>\r\n<p>'),
                 file_name.split('-')[0]
             )
-        file.close()
+            write(self.path(self.save_book, book_name, f'{book_name}.txt'), 'a', content)
         self.epub.save()
         print(book_name, '本地档案合并完毕')
-
-    def download(self, book_name, chapter_id, file_number, page, progress):
-        response = API.Chapter.download_chapter(chapter_id)
-        chapter_title = del_title(response.get('chapter').get('title'))
-        chapter_content = response.get('chapter').get('body')
-        title_body = "\n\n\n{}\n\n{}".format(chapter_title, chapter_content)  # 标题加正文
-        filename = str(file_number).rjust(4, "0") + '-' + chapter_title + '.txt'
-        write(self.path(self.config_book, book_name, filename), 'w', title_body)
-        print('下载进度:{:^3.0f}%'.format((page / progress) * 100), end='\r')
-        time.sleep(0.1)

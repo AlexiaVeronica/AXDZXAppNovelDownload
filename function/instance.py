@@ -37,6 +37,7 @@ def inputs_(prompt, default=None):
 
 def del_title(title: str):
     """删去windowns不规范字符"""
+    title = title.replace("\x06", "").replace("\x05", "").replace("\x07", "")
     return re.sub(r'[？?*|“<>:/\\]', '', title)
 
 
