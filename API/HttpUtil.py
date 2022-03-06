@@ -1,5 +1,5 @@
 import requests
-from function.instance import *
+from instance import *
 import functools
 from fake_useragent import UserAgent
 

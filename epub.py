@@ -1,5 +1,5 @@
 from ebook.ebooklib import epub
-from function.instance import *
+from instance import *
 import API
 
 

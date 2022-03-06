@@ -1,6 +1,6 @@
 import re
 import time
-from function.config import *
+from config import *
 
 
 class Vars:

@@ -3,7 +3,7 @@ import API
 import epub
 import asyncio
 from API import file_io
-from function.instance import *
+from instance import *
 
 
 class Book:

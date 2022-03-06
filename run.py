@@ -1,6 +1,6 @@
 import API
 import book
-from function.instance import *
+from instance import *
 
 
 def agreed_read_readme():
