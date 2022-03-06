@@ -94,5 +94,8 @@ def setup_config():
 
     if config_change:
         Vars.cfg.save()
-        mkdir(Vars.cfg.data.get('save_book'))
-        mkdir(Vars.cfg.data.get('config_book'))
+        if os.path.exists(Vars.cfg.data.get('save_book')) and os.path.exists(Vars.cfg.data.get('config_book')):
+            pass
+        else:
+            mkdir(Vars.cfg.data.get('save_book'))
+            mkdir(Vars.cfg.data.get('config_book'))

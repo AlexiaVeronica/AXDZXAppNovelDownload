@@ -20,12 +20,15 @@ def shell_book(inputs):
         response = API.Book.novel_info(inputs[1])
         if response:
             Vars.book_info = book.Book(response)
+            book_name = Vars.book_info.book_name
+            print("开始下载《{}》".format(book_name))
+            makedirs(Vars.cfg.data.get('config_book') + "/" + book_name)
+            makedirs(Vars.cfg.data.get('save_book') + "/" + book_name)
             Vars.book_info.book_information()
         else:
             print("获取书籍信息失败，请检查id或者重新尝试！")
     else:
         print('未输入Bookid')
-
 
 
 def shell_search_book(inputs):

@@ -34,28 +34,22 @@ class Book:
         return show_info
 
     def book_information(self):
-        makedirs(os.path.join(Vars.cfg.data.get('config_book'), self.book_name))
-        mkdir(Vars.cfg.data.get('save_book'))
-        mkdir(Vars.cfg.data.get('config_book'))
         if self.last_chapter is not None:
-            mkdir(os.path.join(Vars.cfg.data.get('save_book'), self.book_name))
             save_path = os.path.join(Vars.cfg.data.get('save_book'), self.book_name, f'{self.book_name}.txt')
             write(save_path, 'w', f'{self.show_book_info()}简介信息: {self.book_intro}\n')
         self.continue_chapter()
 
     def continue_chapter(self):
         filename_list = ''.join(os.listdir(os.path.join(Vars.cfg.data.get('config_book'), self.book_name)))
-        chapters_url = API.Book.catalogue(self.book_id).get('mixToc').get('chapters')
-        if chapters_url is None:
-            return '书籍获取失败'
-        url_list = [
-            chapters.get('link') for chapters in chapters_url
+        download_chapter_list = [
+            chapters.get('link') for chapters in API.Book.catalogue(self.book_id)
             if chapters.get('link').split('/')[1].rjust(4, "0") + '-' not in filename_list
         ]
-        if len(url_list) != 0 and url_list != []:
+        download_chapter_len = len(download_chapter_list)
+        if download_chapter_len != 0 and download_chapter_list != []:
             chapter_dict = {
-                'chapter_id': [API.Chapter.download_chapter(url) for url in url_list],
-                'file_id': [url.split('/')[1] for url in url_list]
+                'chapter_id': [API.Chapter.download_chapter(url) for url in download_chapter_list],
+                'file_id': [url.split('/')[1] for url in download_chapter_list]
             }
 
             for page, data in enumerate(ahttp.run(chapter_dict['chapter_id'], pool=40, order=True)):
@@ -63,7 +57,7 @@ class Book:
                 content = "\n\n\n{}\n\n{}".format(chapter_title, data.json()['chapter']['body'])
                 filename = str(chapter_dict['file_id'][page]).rjust(4, "0") + '-' + chapter_title + '.txt'
                 write(os.path.join(Vars.cfg.data.get('config_book'), self.book_name, filename), 'w', content)
-                print('下载进度:{:^3.0f}%'.format((page / len(url_list)) * 100), end='\r')
+                print('下载进度:{:^3.0f}%'.format((page / download_chapter_len) * 100), end='\r')
 
         file_name_list = os.listdir(os.path.join(Vars.cfg.data.get('config_book'), self.book_name))  # 获取文本名
         file_name_list.sort(key=lambda x: int(x.split('-')[0]))  # 按照数字顺序排序文本

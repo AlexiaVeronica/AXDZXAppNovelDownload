@@ -17,8 +17,11 @@ class Book:
                 return response
 
     @staticmethod
-    def catalogue(novel_id: int):
-        return get(UrlConstants.BOOK_CATALOGUE.format(novel_id))
+    def catalogue(novel_id: int, max_retry=5):
+        for retry in range(max_retry):
+            response = get(UrlConstants.BOOK_CATALOGUE.format(novel_id))
+            if response.get('mixToc').get('chapters') is not None:
+                return response.get('mixToc').get('chapters')
 
     @staticmethod
     def search_book(novel_name: str):

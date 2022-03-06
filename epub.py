@@ -29,7 +29,7 @@ class EpubFile:
     def cover(self):
         self.epub.set_cover(self.book_name + '.png', API.Cover.download_cover())
 
-    def add_chapter(self, chapter_title, content, serial_number):
+    def add_chapter(self, chapter_title: str, content: str, serial_number: str):
         default_style = '''
         body {font-size:100%;}
         p{
@@ -62,7 +62,7 @@ class EpubFile:
         self.epub.spine.extend(self.EpubList)
         self.epub.add_item(epub.EpubNcx())
         self.epub.add_item(epub.EpubNav())
-        style = '''
+        style = """
                 body {
                     font-family: Auto;
                 }
@@ -86,8 +86,7 @@ class EpubFile:
                 }
                 nav[epub|type~='toc'] > ol > li > ol > li {
                         margin-top: 0.3em;
-                }
-                '''
+                }"""
         nav_css = epub.EpubItem(uid="style_nav", file_name="style/nav.css", media_type="text/css", content=style)
         self.epub.add_item(nav_css)
         epub.write_epub(self.path(Vars.cfg.data.get('save_book'), self.book_name, self.book_name + '.epub'), self.epub,
