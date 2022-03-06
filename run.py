@@ -1,7 +1,7 @@
 import API
 import book
 from function.instance import *
-from function import tag, ranking
+from function import tag
 
 
 def agreed_read_readme():
@@ -68,7 +68,19 @@ def shell_tag(inputs):
 def shell_ranking(inputs):
     if len(inputs) >= 2:
         ranking_num = inputs[1]
-        ranking.ranking_(ranking_num)
+        novel_list = []
+        for data in API.Tag.ranking(ranking_num)['ranking']['books']:
+            for key, Value in data.items():
+                if key == 'title':
+                    print('\n\n{}:\t\t\t{}'.format(key, Value))
+                    continue
+                book_info = '{}:\t\t\t{}'.format(key, Value) if len(
+                    key) <= 6 else '{}:\t\t{}'.format(key, Value)
+                print(book_info)
+            novel_list.append(data.get('_id'))
+        for index, novel_id in enumerate(novel_list):
+            shell_book([index, novel_id])
+
     else:
         ranking_dict = {'周榜': '1', '月榜': '2', '总榜': '3'}
         for key, Value in ranking_dict.items():

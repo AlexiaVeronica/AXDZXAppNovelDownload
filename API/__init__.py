@@ -39,8 +39,8 @@ class Cover:
         return get(api_url).json()
 
     @staticmethod
-    def download_cover(cover_josn: dict):
-        return HttpUtil.get(cover_josn.get('acgurl')).content
+    def download_cover(cover_json: dict):
+        return HttpUtil.get(cover_json.get('acgurl')).content
 
 
 class Tag:
