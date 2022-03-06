@@ -1,16 +1,14 @@
 import ahttp
 import API
 import epub
-import asyncio
-from API import file_io
 from instance import *
 
 
 class Book:
     setup_config()
 
-    def __init__(self, book_info: dict):
-        # self.index = None
+    def __init__(self, book_info: dict, index=None):
+        self.index = index
         self.book_name = book_info.get('title')
         self.book_id = book_info.get('_id')
         self.author_name = book_info.get('author')
@@ -72,9 +70,7 @@ class Book:
 
         for file_name in file_name_list:  # 遍历文件名
             """遍历合并文本所在的路径的单个文件"""
-            event_loop = asyncio.get_event_loop()
-            content = event_loop.run_until_complete(file_io.async_read(
-                os.path.join(Vars.cfg.data.get('config_book'), self.book_name, file_name)))
+            content = write(os.path.join(Vars.cfg.data.get('config_book'), self.book_name, file_name), 'r').read()
             self.epub.add_chapter(
                 file_name.split('-')[1].replace('.txt', ''), content.replace('\n', '</p>\r\n<p>'),
                 file_name.split('-')[0]
