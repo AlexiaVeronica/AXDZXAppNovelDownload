@@ -21,7 +21,7 @@ def shell_book(inputs):
         if response:
             Vars.book_info = book.Book(response)
             book_name = Vars.book_info.book_name
-            print("开始下载《{}》".format(book_name))
+            print("开始下载《{}》\n".format(book_name))
             makedirs(Vars.cfg.data.get('config_book') + "/" + book_name)
             makedirs(Vars.cfg.data.get('save_book') + "/" + book_name)
             Vars.book_info.book_information()
