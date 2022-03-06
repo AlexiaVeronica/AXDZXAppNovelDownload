@@ -42,7 +42,7 @@ class Book:
         if self.last_chapter is not None:
             mkdir(os.path.join(Vars.cfg.data.get('save_book'), self.book_name))
             save_path = os.path.join(Vars.cfg.data.get('save_book'), self.book_name, f'{self.book_name}.txt')
-            write(save_path, 'w', f'{self.show_book_info}简介信息: {self.book_intro}\n')
+            write(save_path, 'w', f'{self.show_book_info()}简介信息: {self.book_intro}\n')
         self.continue_chapter()
 
     def continue_chapter(self):

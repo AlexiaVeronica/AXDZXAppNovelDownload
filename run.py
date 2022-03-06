@@ -1,7 +1,6 @@
 import API
 import book
 from function.instance import *
-from function import tag
 
 
 def agreed_read_readme():
@@ -55,14 +54,28 @@ def get_pool(inputs):
 
 
 def shell_tag(inputs):
+    page = 0
+    book_id_list = list()
     if len(inputs) >= 2:
         tag_id = inputs[1]
         if not Vars.cfg.data.get('tag').get(tag_id):
             print(f"{tag_id} 标签号不存在\n", Vars.cfg.data.get('tag'))
-        else:
-            tag.Tag(tag_id).tag_information()
+            print(API.Tag.get_type())
+            return
+        while True:
+            tag_name = Vars.cfg.data.get('tag')[inputs[1]]
+            response = API.Tag.tag_info(inputs[1], tag_name, page)
+            if response is None:
+                print("分类下载完毕, 一共下载 {} 本".format(book_id_list))
+                break
+            for index, tag_info_data in enumerate(response):
+                novel_id = tag_info_data.get('_id')
+                book_id_list.append(novel_id)
+                print("\n\n{}分类 第{}本\n".format(tag_name, len(book_id_list)))
+                shell_book([index, novel_id])
+            page += 20
     else:
-        print(Vars.cfg.data.get('tag'))
+        print(API.Tag.get_type())
 
 
 def shell_ranking(inputs):

@@ -10,11 +10,11 @@ def get(api_url: str):
 class Book:
 
     @staticmethod
-    def novel_info(novel_id: int):
-        response = get(UrlConstants.BOOK_INFO_API.format(novel_id))
-        if response.get('_id') is not None:
-            return response
-        return {}
+    def novel_info(novel_id: int, max_retry=5):
+        for retry in range(max_retry):
+            response = get(UrlConstants.BOOK_INFO_API.format(novel_id))
+            if response.get('_id') is not None:
+                return response
 
     @staticmethod
     def catalogue(novel_id: int):
@@ -34,22 +34,32 @@ class Chapter:
 
 class Cover:
     @staticmethod
-    def download_cover() -> str:
-        response = HttpUtil.get('http://119.91.108.170:88/api/img/acg.php?return=json')
-        if response.status_code == 200 and response.json().get("code") == "200":
-            return HttpUtil.get(response.json().get("acgurl")).content
-        else:
-            print("msg:", response)
+    def download_cover(max_retry=10) -> str:
+        for retry in range(max_retry):
+            response = HttpUtil.get('http://119.91.108.170:88/api/img/acg.php?return=json')
+            if response.status_code == 200 and response.json().get("code") == "200":
+                return HttpUtil.get(response.json().get("acgurl")).content
+            else:
+                print("msg:", response)
 
 
 class Tag:
     @staticmethod
     def get_type():
-        return get(UrlConstants.GET_TYPE_INFO).get('male')
+        type_dict = {}
+        response = get(UrlConstants.GET_TYPE_INFO)
+        for number, sort in enumerate(response['male']):
+            print(sort)
+            number += 1
+            major = sort.get('major')
+            type_dict[number] = major
+        return type_dict
 
     @staticmethod
     def tag_info(tag_id, tag_name, page):
-        return get(UrlConstants.TAG_API.format(tag_id, tag_name, page))
+        book_list = get(UrlConstants.TAG_API.format(tag_id, tag_name, page))
+        if book_list['books']:
+            return book_list['books']
 
     @staticmethod
     def ranking(ranking_num):
