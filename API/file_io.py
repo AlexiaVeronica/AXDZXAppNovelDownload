@@ -4,7 +4,7 @@ import aiofiles
 
 async def async_write(file_path: str, write_info: str):
     # 异步方式执行with操作,修改为 async with
-    async with aiofiles.open(file_path, 'w', encoding="utf-8") as file_:
+    async with aiofiles.open(file_path, 'a', encoding="utf-8") as file_:
         await file_.write(write_info)
 
 

@@ -15,4 +15,5 @@ def ranking_(ranking_num):
             print(book_info)
         novel_list.append(data.get('_id'))
     for novel_id in novel_list:
-        book.Book(novel_id).book_information()
+        Vars.book_info = book.Book(API.Book.novel_info(novel_id))
+        Vars.book_info.book_information()

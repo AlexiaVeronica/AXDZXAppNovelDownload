@@ -1,18 +1,20 @@
-from API.Settings import *
 from API import HttpUtil, UrlConstants
 import ahttp
 
 
 def get(api_url: str):
     api_url = UrlConstants.WEB_SITE + api_url.replace(UrlConstants.WEB_SITE, '')
-    return HttpUtil.get(api_url)
+    return HttpUtil.get(api_url).json()
 
 
 class Book:
 
     @staticmethod
     def novel_info(novel_id: int):
-        return get(UrlConstants.BOOK_INFO_API.format(novel_id))
+        response = get(UrlConstants.BOOK_INFO_API.format(novel_id))
+        if response.get('_id') is not None:
+            return response
+        return {}
 
     @staticmethod
     def catalogue(novel_id: int):
@@ -20,7 +22,7 @@ class Book:
 
     @staticmethod
     def search_book(novel_name: str):
-        return get(UrlConstants.SEARCH_API.format(novel_name))
+        return get(UrlConstants.SEARCH_API.format(novel_name)).get('books')
 
 
 class Chapter:
@@ -34,11 +36,11 @@ class Cover:
     @staticmethod
     def get_cover():
         api_url = 'http://119.91.108.170:88/api/img/acg.php?return=json'
-        return HttpUtil.cover(api_url).json()
+        return get(api_url).json()
 
     @staticmethod
     def download_cover(cover_josn: dict):
-        return HttpUtil.cover(cover_josn.get('acgurl')).content
+        return HttpUtil.get(cover_josn.get('acgurl')).content
 
 
 class Tag:

@@ -1,6 +1,6 @@
 import API
 import book
-from API.Settings import *
+from function.instance import *
 from function import tag, ranking
 
 
@@ -18,23 +18,25 @@ def agreed_read_readme():
 def shell_book(inputs):
     """通过小说ID下载单本小说"""
     if len(inputs) >= 2:
-        start = time.time()
-        book.Book(inputs[1]).book_information()
-        end = time.time()
-        print(f'下载耗时:{round(end - start, 2)} 秒')
+        response = API.Book.novel_info(inputs[1])
+        if response:
+            Vars.book_info = book.Book(response)
+            Vars.book_info.book_information()
+        else:
+            print("获取书籍信息失败，请检查id或者重新尝试！")
     else:
         print('未输入Bookid')
+
 
 
 def shell_search_book(inputs):
     """搜索书名下载小说"""
     if len(inputs) >= 2:
         start = time.time()
-        for books in API.Book.search_book(inputs[1]).get('books'):
-            book_id = books.get('_id')
-            book.Book(book_id).book_information()
-        end = time.time()
-        print(f'下载耗时:{round(end - start, 2)} 秒')
+        response = API.Book.search_book(inputs[1])
+        for index, books in enumerate(response):
+            shell_book([index, books.get('_id')])
+        print(f'下载耗时:{round(time.time() - start, 2)} 秒')
     else:
         print('未输入书名')
 
@@ -75,25 +77,19 @@ def shell_ranking(inputs):
 
 def shell_list(inputs):
     start = time.time()
-    if len(inputs) >= 2:
-        list_file_name = inputs[1] + '.txt'
-    else:
-        list_file_name = 'list.txt'
+    list_file_name = inputs[1] + '.txt' if len(inputs) >= 2 else 'list.txt'
     try:
         list_file_input = open(list_file_name, 'r', encoding='utf-8')
     except OSError:
         print(f"{list_file_name}文件不存在")
         return
-    list_lines = list_file_input.readlines()
-    for line in list_lines:
+    for line in list_file_input.readlines():
         if re.match("^\\s*([0-9]{1,7}).*$", line):
             start = time.time()
             book_id = re.sub("^\\s*([0-9]{1,7}).*$\\n?", "\\1", line)
             book.Book(book_id).book_information()
-            end = time.time()
-            print(f'下载耗时:{round(end - start, 2)} 秒')
-    end = time.time()
-    print(f'下载耗时:{round(end - start, 2)} 秒')
+            print(f'下载耗时:{round(time.time() - start, 2)} 秒')
+    print(f'下载耗时:{round(time.time() - start, 2)} 秒')
 
 
 def shell():
@@ -117,7 +113,7 @@ def shell():
             shell_search_book(inputs)
         elif inputs[0] == 'r' or inputs[0] == '--rank':
             shell_ranking(inputs)
-        elif inputs[0] == 'u' or inputs[0] == '--updata':
+        elif inputs[0] == 'u' or inputs[0] == '--update':
             shell_list(inputs)
         elif inputs[0] == 'p' or inputs[0] == '--pool':
             get_pool(inputs)

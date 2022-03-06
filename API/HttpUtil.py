@@ -1,6 +1,23 @@
-import random
 import requests
 from function.instance import *
+import functools
+from fake_useragent import UserAgent
+
+session = requests.session()
+
+
+def MaxRetry(func, max_retry=5):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        for retry in range(max_retry):
+            response = func(*args, **kwargs)
+            if not isinstance(response, bool):
+                return response
+            else:
+                print("尝试第:{}次".format(retry + 1))
+                time.sleep(retry * 0.5)
+
+    return wrapper
 
 
 def headers():
@@ -9,55 +26,44 @@ def headers():
         "Connection": "Keep-Alive",
         "Cache-Control": "no-cache",
         "Accept-Encoding": "gzip",
-        "User-Agent": random.choice(Vars.cfg.data.get('USER_AGENT_LIST'))
+        'User-Agent': UserAgent(verify_ssl=False).random,
     }
 
 
-session = requests.session()
+@MaxRetry
+def get(api_url: str, params=None, **kwargs):
+    try:
+        response = requests.get(api_url, headers=headers(), params=params, **kwargs)
+        if response.status_code == 200:
+            return response
+        else:
+            return False
+    except requests.exceptions.RequestException as error:
+        print("\nGet url:{} Error:{}".format(api_url, error))
+        return False
 
 
-def get(api_url, max_retry=10):
-    for count in range(max_retry):
-        try:
-            return session.get(api_url, headers=headers()).json()
-        except (OSError, TimeoutError, IOError) as error:
-            time.sleep(0.5 * count)
-    else:
-        print(f"\nGet Failed:{api_url}\nTerminating......")
-        sys.exit(1)
+@MaxRetry
+def post(api_url: str, data=None, **kwargs):
+    try:
+        response = requests.post(api_url, headers=headers(), params=data, **kwargs)
+        if response.status_code == 200:
+            return response
+        else:
+            return False
+    except requests.exceptions.RequestException as error:
+        print("\nGet url:{} Error:{}".format(api_url, error))
+        return False
 
 
-def post(api_url, data=None, max_retry=10):
-    for count in range(max_retry):
-        try:
-            return session.post(api_url, data=data, headers=headers()).json()
-        except (OSError, TimeoutError, IOError) as error:
-            print(f"\nGet Error Retry {count + 1}: " + api_url)
-            time.sleep(0.5 * count)
-    else:
-        print(f"\nGet Failed:{api_url}\nTerminating......")
-        sys.exit(1)
-
-
-def cover(api_url: str, max_retry=10):
-    for count in range(max_retry):
-        try:
-            return requests.get(api_url, headers=headers())
-        except (OSError, TimeoutError, IOError) as error:
-            print(f"\nGet Error Retry {count + 1}: " + api_url)
-            time.sleep(0.5 * count)
-    else:
-        print(f"\nGet Failed:{api_url}\nTerminating......")
-        sys.exit(1)
-
-
-def put(api_url, data=None, max_retry=10):
-    for count in range(max_retry):
-        try:
-            return session.put(api_url, data=data, headers=headers()).json()
-        except (OSError, TimeoutError, IOError) as error:
-            print(f"\nGet Error Retry {count + 1}: " + api_url)
-            time.sleep(0.5 * count)
-    else:
-        print(f"\nGet Failed:{api_url}\nTerminating......")
-        sys.exit(1)
+@MaxRetry
+def put(api_url: str, data=None, **kwargs):
+    try:
+        response = requests.put(api_url, headers=headers(), params=data, **kwargs)
+        if response.status_code == 200:
+            return response
+        else:
+            return False
+    except requests.exceptions.RequestException as error:
+        print("\nGet url:{} Error:{}".format(api_url, error))
+        return False
