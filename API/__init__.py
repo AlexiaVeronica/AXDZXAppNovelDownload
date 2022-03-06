@@ -34,13 +34,12 @@ class Chapter:
 
 class Cover:
     @staticmethod
-    def get_cover():
-        api_url = 'http://119.91.108.170:88/api/img/acg.php?return=json'
-        return get(api_url).json()
-
-    @staticmethod
-    def download_cover(cover_json: dict):
-        return HttpUtil.get(cover_json.get('acgurl')).content
+    def download_cover() -> str:
+        response = HttpUtil.get('http://119.91.108.170:88/api/img/acg.php?return=json')
+        if response.status_code == 200 and response.json().get("code") == "200":
+            return HttpUtil.get(response.json().get("acgurl")).content
+        else:
+            print("msg:", response)
 
 
 class Tag:

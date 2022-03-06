@@ -27,9 +27,7 @@ class EpubFile:
         self.EpubList.append(intro_)
 
     def cover(self):
-        cover_url = API.Cover.get_cover()
-        cover_path = API.Cover.download_cover(cover_url)
-        self.epub.set_cover(self.book_name + '.png', cover_path)
+        self.epub.set_cover(self.book_name + '.png', API.Cover.download_cover())
 
     def add_chapter(self, chapter_title, content, serial_number):
         default_style = '''
