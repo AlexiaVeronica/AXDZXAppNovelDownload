@@ -1,6 +1,6 @@
 import PySimpleGUI as sg
 import book
-from API.Settings import *
+from instance import *
 
 setup_config()
 Vars.cfg.load()
@@ -31,7 +31,7 @@ def main():
         if event == '_downloader_':
             novel_id = values['novel_id']
             if novel_id != '':
-                book.Book(novel_id).book_information(types=False)
+                book.Book(novel_id).book_information()
             else:
                 sg.popup_timed('输入小说序号为空！', title='提醒')
 

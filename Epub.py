@@ -1,33 +1,32 @@
-from ebook.ebooklib import epub
 from instance import *
+from ebook.ebooklib import epub
 import API
+
+Vars.epub_config = epub.EpubBook()
 
 
 class EpubFile:
-    def __init__(self, book_id, book_name, author_name):
-        self.book_id = book_id
-        self.book_name = book_name
-        self.author_name = author_name
-        self.epub = epub.EpubBook()
+
+    def __init__(self):
         self.EpubList = list()
         self.path = os.path.join
-        self.epub.set_language('zh-CN')
-        self.epub.set_identifier(book_id)
-        self.epub.set_title(book_name)
-        self.epub.add_author(author_name)
+        Vars.epub_config.set_language('zh-CN')
+        Vars.epub_config.set_identifier(Vars.book_info.book_id)
+        Vars.epub_config.set_title(Vars.book_info.book_name)
+        Vars.epub_config.add_author(Vars.book_info.author_name)
 
-    def add_intro(self, author_name, up_time, up_chapter, intro, novel_tag):
+    def add_intro(self):
         intro_ = epub.EpubHtml(title='简介信息', file_name='0000-000000-intro.xhtml', lang='zh-CN')
         intro_.content = '<html><head></head><body><h1>简介</h1>'
-        intro_.content += '<p>书籍书名:{}</p><p>书籍序号:{}</p>'.format(self.book_name, self.book_id)
-        intro_.content += '<p>书籍作者:{}</p><p>更新时间:{}</p>'.format(author_name, up_time)
-        intro_.content += '<p>最新章节:{}</p><p>系统标签:{}</p>'.format(up_chapter, novel_tag)
-        intro_.content += '<p>简介信息:</p>{}</body></html>'.format(intro)
-        self.epub.add_item(intro_)
+        intro_.content += '<p>书籍书名:{}</p><p>书籍序号:{}</p>'.format(Vars.book_info.book_name, Vars.book_info.book_id)
+        intro_.content += '<p>书籍作者:{}</p><p>更新时间:{}</p>'.format(Vars.book_info.author_name, Vars.book_info.book_updated)
+        intro_.content += '<p>最新章节:{}</p><p>系统标签:{}</p>'.format(Vars.book_info.last_chapter, Vars.book_info.book_tag)
+        intro_.content += '<p>简介信息:</p>{}</body></html>'.format(Vars.book_info.book_intro)
+        Vars.epub_config.add_item(intro_)
         self.EpubList.append(intro_)
 
     def cover(self):
-        self.epub.set_cover(self.book_name + '.png', API.Cover.download_cover())
+        Vars.epub_config.set_cover(Vars.book_info.book_name + '.png', API.Cover.download_cover())
 
     def add_chapter(self, chapter_title: str, content: str, serial_number: str):
         default_style = '''
@@ -52,16 +51,16 @@ class EpubFile:
 
         chapter_serial.content = content
         chapter_serial.add_item(default_css)
-        self.epub.add_item(chapter_serial)
+        Vars.epub_config.add_item(chapter_serial)
         self.EpubList.append(chapter_serial)
 
     def save(self):
         self.cover()
-        self.epub.toc = tuple(self.EpubList)
-        self.epub.spine = ['nav']
-        self.epub.spine.extend(self.EpubList)
-        self.epub.add_item(epub.EpubNcx())
-        self.epub.add_item(epub.EpubNav())
+        Vars.epub_config.toc = tuple(self.EpubList)
+        Vars.epub_config.spine = ['nav']
+        Vars.epub_config.spine.extend(self.EpubList)
+        Vars.epub_config.add_item(epub.EpubNcx())
+        Vars.epub_config.add_item(epub.EpubNav())
         style = """
                 body {
                     font-family: Auto;
@@ -88,6 +87,7 @@ class EpubFile:
                         margin-top: 0.3em;
                 }"""
         nav_css = epub.EpubItem(uid="style_nav", file_name="style/nav.css", media_type="text/css", content=style)
-        self.epub.add_item(nav_css)
-        epub.write_epub(self.path(Vars.cfg.data.get('save_book'), self.book_name, self.book_name + '.epub'), self.epub,
-                        {})
+        Vars.epub_config.add_item(nav_css)
+        epub.write_epub(
+            self.path(Vars.cfg.data.get('save_book'), Vars.book_info.book_name, Vars.book_info.book_name + '.epub'),
+                        Vars.epub_config, {})

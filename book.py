@@ -1,6 +1,6 @@
 import ahttp
 import API
-import epub
+import Epub
 from instance import *
 
 
@@ -18,9 +18,6 @@ class Book:
         self.word_count = book_info.get('wordCount')
         self.book_updated = book_info.get('updated')
         self.last_chapter = book_info.get('lastChapter')
-        self.epub = epub.EpubFile(self.book_id, self.book_name, self.author_name)
-        self.epub.add_intro(
-            self.author_name, self.book_updated, self.last_chapter, self.book_intro, self.book_tag)
 
     def show_book_info(self) -> str:
         show_info = '书籍书名: {}\n'.format(self.book_name)
@@ -34,6 +31,8 @@ class Book:
         return show_info
 
     def book_information(self):
+        Vars.epub_info = Epub.EpubFile()
+        Vars.epub_info.add_intro()
         if self.last_chapter is not None:
             save_path = os.path.join(Vars.cfg.data.get('save_book'), self.book_name, f'{self.book_name}.txt')
             write(save_path, 'w', f'{self.show_book_info()}简介信息: {self.book_intro}\n')
@@ -65,12 +64,12 @@ class Book:
         for file_name in file_name_list:  # 遍历文件名
             """遍历合并文本所在的路径的单个文件"""
             content = write(os.path.join(Vars.cfg.data.get('config_book'), self.book_name, file_name), 'r').read()
-            self.epub.add_chapter(
+            Vars.epub_info.add_chapter(
                 file_name.split('-')[1].replace('.txt', ''), content.replace('\n', '</p>\r\n<p>'),
                 file_name.split('-')[0]
             )
             write(
                 os.path.join(Vars.cfg.data.get('save_book'), self.book_name, f'{self.book_name}.txt'), 'a', content
             )
-        self.epub.save()
+        Vars.epub_info.save()
         print(self.book_name, '本地档案合并完毕')
