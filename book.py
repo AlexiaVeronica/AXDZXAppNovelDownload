@@ -29,13 +29,22 @@ class Book:
         print(show_info)
         return show_info
 
-    def book_information(self):
+    def book_information(self, config_dir: str, save_dir: str):
         if self.last_chapter is not None:
-            save_path = os.path.join(Vars.cfg.data.get('save_book'), self.book_name, f'{self.book_name}.txt')
-            write(save_path, 'w', f'{self.show_book_info()}简介信息: {self.book_intro}\n')
-        self.continue_chapter()
+            write(save_dir + '/' + f'{self.book_name}.txt', 'w', f'{self.show_book_info()}简介信息: {self.book_intro}\n')
+        self.download_chapter_threading()
+        file_name_list = os.listdir(config_dir)  # 获取目录文本名
+        file_name_list.sort(key=lambda x: int(x.split('-')[0]))  # 按照数字顺序排序文本
+        for file_name in file_name_list:  # 遍历文件名
+            """遍历合并文本所在的路径的单个文件"""
+            content = write(os.path.join(config_dir, file_name), 'r').read()
+            chapter_index = file_name.split('-')[1].replace('.txt', '')
+            Vars.epub_info.add_chapter(chapter_index, content, file_name.split('-')[0])
+            write(save_dir + '/' + f'{self.book_name}.txt', 'a', content)
+        Vars.epub_info.save()
+        print(self.book_name, '本地档案合并完毕')
 
-    def continue_chapter(self):
+    def download_chapter_threading(self):
         filename_list = ''.join(os.listdir(os.path.join(Vars.cfg.data.get('config_book'), self.book_name)))
         download_chapter_list = [
             chapters.get('link') for chapters in API.Book.catalogue(self.book_id)
@@ -54,19 +63,3 @@ class Book:
                 filename = str(chapter_dict['file_id'][page]).rjust(4, "0") + '-' + chapter_title + '.txt'
                 write(os.path.join(Vars.cfg.data.get('config_book'), self.book_name, filename), 'w', content)
                 print('下载进度:{:^3.0f}%'.format((page / download_chapter_len) * 100), end='\r')
-
-        file_name_list = os.listdir(os.path.join(Vars.cfg.data.get('config_book'), self.book_name))  # 获取文本名
-        file_name_list.sort(key=lambda x: int(x.split('-')[0]))  # 按照数字顺序排序文本
-
-        for file_name in file_name_list:  # 遍历文件名
-            """遍历合并文本所在的路径的单个文件"""
-            content = write(os.path.join(Vars.cfg.data.get('config_book'), self.book_name, file_name), 'r').read()
-            Vars.epub_info.add_chapter(
-                file_name.split('-')[1].replace('.txt', ''), content.replace('\n', '</p>\r\n<p>'),
-                file_name.split('-')[0]
-            )
-            write(
-                os.path.join(Vars.cfg.data.get('save_book'), self.book_name, f'{self.book_name}.txt'), 'a', content
-            )
-        Vars.epub_info.save()
-        print(self.book_name, '本地档案合并完毕')

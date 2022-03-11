@@ -1,5 +1,4 @@
-from API import HttpUtil, UrlConstants
-import ahttp
+from API import HttpUtil, UrlConstants, ahttp
 
 
 def get(api_url: str):

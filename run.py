@@ -15,23 +15,23 @@ def agreed_read_readme():
             sys.exit()
 
 
-def shell_book(inputs):
-    """通过小说ID下载单本小说"""
+def shell_book(inputs):  # 通过小说ID下载单本小说
     if len(inputs) >= 2:
         response = API.Book.novel_info(inputs[1])
         if response:
             Vars.book_info = book.Book(response)
-            Vars.epub_info = epub.EpubFile(Vars.book_info.book_id, Vars.book_info.book_name, Vars.book_info.author_name)
+            book_name = Vars.book_info.book_name
+            Vars.epub_info = epub.EpubFile(Vars.book_info.book_id, book_name, Vars.book_info.author_name)
             Vars.epub_info.add_intro(
                 Vars.book_info.author_name, Vars.book_info.book_updated, Vars.book_info.last_chapter,
                 Vars.book_info.book_intro, Vars.book_info.book_tag
             )
-
-            book_name = Vars.book_info.book_name
             print("开始下载《{}》".format(book_name))
-            makedirs(Vars.cfg.data.get('config_book') + "/" + book_name)
-            makedirs(Vars.cfg.data.get('save_book') + "/" + book_name)
-            Vars.book_info.book_information()
+            config_dir = os.path.join(Vars.cfg.data.get('config_book'), book_name)
+            save_dir = os.path.join(Vars.cfg.data.get('save_book'), book_name)
+            makedirs(config_dir)
+            makedirs(save_dir)
+            Vars.book_info.book_information(config_dir, save_dir)
         else:
             print("获取书籍信息失败，请检查id或者重新尝试！")
     else:
@@ -84,9 +84,8 @@ def shell_tag(inputs):
 
 def shell_ranking(inputs):
     if len(inputs) >= 2:
-        ranking_num = inputs[1]
         novel_list = []
-        for data in API.Tag.ranking(ranking_num)['ranking']['books']:
+        for data in API.Tag.ranking(inputs[1])['ranking']['books']:
             for key, Value in data.items():
                 if key == 'title':
                     print('\n\n{}:\t\t\t{}'.format(key, Value))
@@ -109,26 +108,23 @@ def shell_list(inputs):
     list_file_name = inputs[1] + '.txt' if len(inputs) >= 2 else 'list.txt'
     try:
         list_file_input = open(list_file_name, 'r', encoding='utf-8')
+        for line in list_file_input.readlines():
+            if re.match("^\\s*([0-9]{1,7}).*$", line):
+                start = time.time()
+                book_id = re.sub("^\\s*([0-9]{1,7}).*$\\n?", "\\1", line)
+                book.Book(book_id).book_information()
+                print(f'下载耗时:{round(time.time() - start, 2)} 秒')
+        print(f'下载耗时:{round(time.time() - start, 2)} 秒')
     except OSError:
         print(f"{list_file_name}文件不存在")
-        return
-    for line in list_file_input.readlines():
-        if re.match("^\\s*([0-9]{1,7}).*$", line):
-            start = time.time()
-            book_id = re.sub("^\\s*([0-9]{1,7}).*$\\n?", "\\1", line)
-            book.Book(book_id).book_information()
-            print(f'下载耗时:{round(time.time() - start, 2)} 秒')
-    print(f'下载耗时:{round(time.time() - start, 2)} 秒')
 
 
 def shell():
     if len(sys.argv) > 1:
-        command_line = True
-        inputs = sys.argv[1:]
+        command_line, inputs = True, sys.argv[1:]
     else:
-        command_line = False
         print(Vars.cfg.data.get('help'))
-        inputs = re.split('\\s+', inputs_('>').strip())
+        command_line, inputs = False, re.split('\\s+', inputs_('>').strip())
     while True:
         if inputs[0].startswith('q') or inputs[0] == '--quit':
             sys.exit("已退出程序")
@@ -155,5 +151,4 @@ def shell():
 
 if __name__ == '__main__':
     agreed_read_readme()
-
     shell()

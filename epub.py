@@ -50,7 +50,7 @@ class EpubFile:
             lang='zh-CN', uid='chapter_{}'.format(serial_number)
         )
 
-        chapter_serial.content = content
+        chapter_serial.content = content.replace('\n', '</p>\r\n<p>')
         chapter_serial.add_item(default_css)
         self.epub.add_item(chapter_serial)
         self.EpubList.append(chapter_serial)
