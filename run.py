@@ -1,5 +1,6 @@
 import API
 import book
+import epub
 from instance import *
 
 
@@ -17,19 +18,24 @@ def agreed_read_readme():
 def shell_book(inputs):
     """通过小说ID下载单本小说"""
     if len(inputs) >= 2:
-        Vars.book_info = API.Book.novel_info(inputs[1])
-        if Vars.book_info is not None:
-            Vars.book_info = book.Book(Vars.book_info)
+        response = API.Book.novel_info(inputs[1])
+        if response:
+            Vars.book_info = book.Book(response)
+            Vars.epub_info = epub.EpubFile(Vars.book_info.book_id, Vars.book_info.book_name, Vars.book_info.author_name)
+            Vars.epub_info.add_intro(
+                Vars.book_info.author_name, Vars.book_info.book_updated, Vars.book_info.last_chapter,
+                Vars.book_info.book_intro, Vars.book_info.book_tag
+            )
+
             book_name = Vars.book_info.book_name
             print("开始下载《{}》".format(book_name))
             makedirs(Vars.cfg.data.get('config_book') + "/" + book_name)
             makedirs(Vars.cfg.data.get('save_book') + "/" + book_name)
             Vars.book_info.book_information()
-
         else:
             print("获取书籍信息失败，请检查id或者重新尝试！")
     else:
-        print('未输入书籍序号！')
+        print('未输入Bookid')
 
 
 def shell_search_book(inputs):
@@ -48,37 +54,29 @@ def get_pool(inputs):
     if len(inputs) >= 2:
         if inputs[1].isdigit():
             Vars.cfg.data['Thread_Pool'] = int(inputs[1])
-            Vars.cfg.save()
-            print("线程已设置为", Vars.cfg.data.get('Thread_Pool'))
-
-        else:
-            print("设置失败，输入信息不是数字")
+            Vars.cfg.save(), print("线程已设置为", Vars.cfg.data.get('Thread_Pool'))
+            return
+        print("设置失败，输入信息不是数字")
     else:
         print("默认线程为", Vars.cfg.data.get('Thread_Pool'))
 
 
 def shell_tag(inputs):
     if len(inputs) >= 2:
-        tag_id, page = inputs[1], 0
+        tag_id = inputs[1]
         if not Vars.cfg.data.get('tag').get(tag_id):
-            print(f"{tag_id} 标签号不存在\n", Vars.cfg.data.get('tag'))
-            print(API.Tag.get_type())
+            print(f"{tag_id} 标签号不存在\n")
+            for key, Value in Vars.cfg.data.get('tag').items():
+                print('{}:\t\t\t{}'.format(key, Value))
             return
+        page = 0
         while True:
             tag_name = Vars.cfg.data.get('tag')[inputs[1]]
             response = API.Tag.tag_info(inputs[1], tag_name, page)
-            if response is None:
-                print("分类下载完毕")
-                break
-            for index, tag_info_data in enumerate(response):
-                print("\n\n{}分类 第{}本!\n".format(tag_name, index+1))
-                Vars.book_info = API.Book.novel_info(tag_info_data.get('_id'))
-                if Vars.book_info is not None:
-                    Vars.book_info = book.Book(Vars.book_info)
-                    print("开始下载《{}》".format(Vars.book_info.book_name))
-                    makedirs(Vars.cfg.data.get('config_book') + "/" + Vars.book_info.book_name)
-                    makedirs(Vars.cfg.data.get('save_book') + "/" + Vars.book_info.book_name)
-                    Vars.book_info.book_information()
+            if response is None: break
+            for index, tag_info_data in enumerate(response, start=1):
+                print("\n\n{}分类 第{}本\n".format(tag_name, index))
+                shell_book([index, tag_info_data.get('_id')])
             page += 20
     else:
         print(API.Tag.get_type())

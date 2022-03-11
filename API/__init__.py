@@ -52,7 +52,6 @@ class Tag:
         type_dict = {}
         response = get(UrlConstants.GET_TYPE_INFO)
         for number, sort in enumerate(response['male']):
-            print(sort)
             number += 1
             major = sort.get('major')
             type_dict[number] = major

@@ -1,6 +1,5 @@
 import ahttp
 import API
-import Epub
 from instance import *
 
 
@@ -31,8 +30,6 @@ class Book:
         return show_info
 
     def book_information(self):
-        Vars.epub_info = Epub.EpubFile()
-        Vars.epub_info.add_intro()
         if self.last_chapter is not None:
             save_path = os.path.join(Vars.cfg.data.get('save_book'), self.book_name, f'{self.book_name}.txt')
             write(save_path, 'w', f'{self.show_book_info()}简介信息: {self.book_intro}\n')
