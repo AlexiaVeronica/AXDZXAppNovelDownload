@@ -27,11 +27,11 @@ class Book:
         show_info += '书籍标签: {}\n'.format(self.book_tag)
         show_info += '最新章节: {}\n'.format(self.last_chapter)
         print(show_info)
-        return show_info
+        return '{}简介信息:\n {}'.format(show_info, self.book_intro)
 
     def book_information(self, config_dir: str, save_dir: str):
         if self.last_chapter is not None:
-            write(save_dir + '/' + f'{self.book_name}.txt', 'w', f'{self.show_book_info()}简介信息: {self.book_intro}\n')
+            write(save_dir + '/' + f'{self.book_name}.txt', 'w', self.show_book_info())
         self.download_chapter_threading()
         file_name_list = os.listdir(config_dir)  # 获取目录文本名
         file_name_list.sort(key=lambda x: int(x.split('-')[0]))  # 按照数字顺序排序文本

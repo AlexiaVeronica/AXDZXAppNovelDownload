@@ -17,9 +17,9 @@ def agreed_read_readme():
 
 def shell_book(inputs):  # 通过小说ID下载单本小说
     if len(inputs) >= 2:
-        response = API.Book.novel_info(inputs[1])
-        if response:
-            Vars.book_info = book.Book(response)
+        Vars.book_info = API.Book.novel_info(inputs[1])
+        if Vars.book_info is not None and isinstance(Vars.book_info, dict):
+            Vars.book_info = book.Book(Vars.book_info)
             book_name = Vars.book_info.book_name
             Vars.epub_info = epub.EpubFile(Vars.book_info.book_id, book_name, Vars.book_info.author_name)
             Vars.epub_info.add_intro(
