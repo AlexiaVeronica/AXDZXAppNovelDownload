@@ -27,10 +27,9 @@ def shell_book(inputs):  # 通过小说ID下载单本小说
                 Vars.book_info.book_intro, Vars.book_info.book_tag
             )
             print("开始下载《{}》".format(book_name))
-            config_dir = os.path.join(Vars.cfg.data.get('config_book'), book_name)
-            save_dir = os.path.join(Vars.cfg.data.get('save_book'), book_name)
-            makedirs(config_dir)
-            makedirs(save_dir)
+            config_dir = Vars.cfg.data.get('config_book') + "/" + book_name
+            save_dir = Vars.cfg.data.get('save_book') + "/" + book_name
+            makedirs(config_dir), makedirs(save_dir)
             Vars.book_info.book_information(config_dir, save_dir)
         else:
             print("获取书籍信息失败，请检查id或者重新尝试！")
@@ -108,12 +107,9 @@ def shell_list(inputs):
     list_file_name = inputs[1] + '.txt' if len(inputs) >= 2 else 'list.txt'
     try:
         list_file_input = open(list_file_name, 'r', encoding='utf-8')
-        for line in list_file_input.readlines():
-            if re.match("^\\s*([0-9]{1,7}).*$", line):
-                start = time.time()
-                book_id = re.sub("^\\s*([0-9]{1,7}).*$\\n?", "\\1", line)
-                book.Book(book_id).book_information()
-                print(f'下载耗时:{round(time.time() - start, 2)} 秒')
+        book_list = [line for line in list_file_input.readlines() if re.match("^\\s*([0-9]{1,7}).*$", line)]
+        for book_id in book_list:
+            shell_book(['', re.sub("^\\s*([0-9]{1,7}).*$\\n?", "\\1", book_id)])
         print(f'下载耗时:{round(time.time() - start, 2)} 秒')
     except OSError:
         print(f"{list_file_name}文件不存在")
