@@ -8,26 +8,17 @@ from instance import *
 setup_config()
 
 
-
-
-
-def download_book(book_id: str):
-    Vars.book_info = API.Book.novel_info(book_id)
-    if Vars.book_info is not None and isinstance(Vars.book_info, dict):
-        Vars.book_info = book.Book(Vars.book_info)
-        book_name = Vars.book_info.book_name
-        Vars.epub_info = epub.EpubFile(Vars.book_info.book_id, book_name, Vars.book_info.author_name)
-        Vars.epub_info.add_intro(
-            Vars.book_info.author_name, Vars.book_info.book_updated, Vars.book_info.last_chapter,
-            Vars.book_info.book_intro, Vars.book_info.book_tag
-        )
-        print("开始下载《{}》".format(book_name))
-        config_dir = Vars.cfg.data.get('config_book') + "/" + book_name
-        save_dir = Vars.cfg.data.get('save_book') + "/" + book_name
-        makedirs(config_dir), makedirs(save_dir)
-        Vars.book_info.download_book(config_dir, save_dir)
-    else:
-        print("获取失败")
+def download_book():
+    book_name = Vars.book_info.book_name
+    Vars.epub_info = epub.EpubFile(Vars.book_info.book_id, book_name, Vars.book_info.author_name)
+    Vars.epub_info.add_intro(
+        Vars.book_info.author_name, Vars.book_info.book_updated, Vars.book_info.last_chapter,
+        Vars.book_info.book_intro, Vars.book_info.book_tag
+    )
+    config_dir = Vars.cfg.data.get('config_book') + "/" + book_name
+    save_dir = Vars.cfg.data.get('save_book') + "/" + book_name
+    makedirs(config_dir), makedirs(save_dir)
+    Vars.book_info.download_book(config_dir, save_dir)
 
 
 def main():
@@ -56,7 +47,13 @@ def main():
         if event == "开始下载":
             print(values['-BID-'])
             if values['-BID-'] != "":
-                threading.Thread(target=download_book, args=(values['-BID-'],), daemon=True).start()
+                Vars.book_info = API.Book.novel_info(values['-BID-'])
+                if Vars.book_info is not None and isinstance(Vars.book_info, dict):
+                    Vars.book_info = book.Book(Vars.book_info)
+                    sg.popup_cancel('开始下载{}'.format(Vars.book_info.book_name))
+                    threading.Thread(target=download_book).start()
+                else:
+                    print("获取失败")
             else:
                 sg.popup_ok('获取书籍信息失败！', title='提醒')
         # if event == '_DOWN_':
