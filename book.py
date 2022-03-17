@@ -45,14 +45,22 @@ class Book:
         print('{}/{} 进度:{:^3.0f}%'.format(self.progress_bar, download_length, percentage), end='\r')
         self.progress_bar += 1
 
+    def output_chapter_content(self, chapter_title, chapter_content):
+        content = ""
+        for line in chapter_content.split('\r\n'):
+            if line.strip() != "" or line in ['\n', '\r\n']:
+                content += "　　{}".format(line.strip("　"))
+        return f"\n\n\n{chapter_title}\n\n{content}"
+
     def download_content(self, chapter_url, file_id, download_length):
         self.pool_sema.acquire()
         chapter_title, chapter_content = API.Chapter.download_chapter(chapter_url)
-        self.progress(download_length)
+        file_name = f"{file_id}-{del_title(chapter_title)}.txt"
         write(
-            f"{Vars.cfg.data.get('config_book')}/{self.book_name}/{file_id}-{del_title(chapter_title)}.txt", 'w',
-            f"\n\n\n{chapter_title}\n\n{chapter_content}"
+            f"{Vars.cfg.data.get('config_book')}/{self.book_name}/{file_name}", 'w',
+            self.output_chapter_content(chapter_title, chapter_content)
         )
+        self.progress(download_length)
         self.pool_sema.release()
 
     def output_text_and_epub(self, config_dir, save_dir):
@@ -63,7 +71,7 @@ class Book:
             content = write(os.path.join(config_dir, file_name), 'r').read()
             chapter_index = file_name.split('-')[1].replace('.txt', '')
             Vars.epub_info.add_chapter(chapter_index, content, file_name.split('-')[0])
-            write(save_dir + '/' + f'{self.book_name}.txt', 'a', content)
+            write(f'{save_dir}/{self.book_name}.txt', 'a', content)
         Vars.epub_info.save()
 
     def get_chapter_url(self):
