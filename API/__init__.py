@@ -9,11 +9,10 @@ def get(api_url: str):
 class Book:
 
     @staticmethod
-    def novel_info(novel_id: int, max_retry=5):
-        for retry in range(max_retry):
-            response = get(UrlConstants.BOOK_INFO_API.format(novel_id))
-            if response.get('_id') is not None:
-                return response
+    def novel_info(novel_id: int):
+        response = get(UrlConstants.BOOK_INFO_API.format(novel_id))
+        if response.get('_id') is not None:
+            return response
 
     @staticmethod
     def catalogue(novel_id: int, max_retry=5):
