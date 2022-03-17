@@ -37,14 +37,14 @@ class Chapter:
 
 class Cover:
     @staticmethod
-    def download_cover(max_retry=1) -> str:
+    def download_cover(max_retry=10) -> str:
         for retry in range(max_retry):
-            response = HttpUtil.get('https://acg.yanwz.cn/wallpaper/api.php')
-            print(response)
-            if response.status_code == 200 and response.json().get("code") == "200":
-                return HttpUtil.get(response.content).content
+            params = {'type': 'moe', 'size': '1920x1080'}
+            response = HttpUtil.get('https://api.yimian.xyz/img', params=params)
+            if response.status_code == 200:
+                return HttpUtil.get(response.url).content
             else:
-                print("msg:", response)
+                print("msg:", response.text)
 
 
 class Tag:

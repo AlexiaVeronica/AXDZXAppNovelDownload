@@ -1,6 +1,4 @@
 import threading
-
-import ahttp
 import API
 from instance import *
 
