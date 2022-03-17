@@ -38,7 +38,6 @@ def shell_book(inputs):  # 通过小说ID下载单本小说
 
 
 def shell_search_book(inputs):
-    """搜索书名下载小说"""
     if len(inputs) >= 2:
         start = time.time()
         response = API.Book.search_book(inputs[1])
@@ -146,5 +145,6 @@ def shell():
 
 
 if __name__ == '__main__':
+    setup_config()
     agreed_read_readme()
     shell()

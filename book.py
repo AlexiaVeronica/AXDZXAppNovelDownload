@@ -3,8 +3,24 @@ import API
 from instance import *
 
 
+def output_chapter_content(chapter_content, chapter_title="", intro=False):
+    content = ""
+    if intro is True:
+        for line in chapter_content.splitlines():
+            chapter_line = line.strip("　").strip()
+            if chapter_line != "":
+                content += "\n" + chapter_line[:60]
+        return content
+    for line in chapter_content.splitlines():
+        chapter_line = line.strip("　").strip()
+        if chapter_line != "" and len(chapter_line) > 2:
+            if "http" in chapter_line:
+                continue
+            content += "\n　　{}".format(chapter_line)
+    return f"{chapter_title}\n\n{content}"
+
+
 class Book:
-    setup_config()
 
     def __init__(self, book_info: dict, index=None):
         self.index = index
@@ -19,14 +35,14 @@ class Book:
         self.book_tag = book_info.get('cat')
         self.word_count = book_info.get('wordCount')
         self.book_updated = book_info.get('updated')
-        self.last_chapter = book_info.get('lastChapter')
+        self.last_chapter = del_title(book_info.get('lastChapter'))
 
     def show_book_info(self) -> str:
         show_info = '作者:{0:<{2}}状态:{1}\n'.format(self.author_name, self.book_state, isCN(self.author_name))
         show_info += '标签:{0:<{2}}字数:{1}\n'.format(self.book_tag, self.word_count, isCN(self.book_tag))
         show_info += '最新:{0:<{2}}更新:{1}\n'.format(self.last_chapter, self.book_updated, isCN(self.last_chapter))
         print(show_info)
-        return '{}简介信息:\n{}'.format(show_info, self.output_chapter_content(self.book_intro, intro=True))
+        return '{}简介:\n{}'.format(show_info, output_chapter_content(self.book_intro, intro=True))
 
     def download_book(self, config_dir: str, save_dir: str):
         if self.last_chapter is not None:
@@ -41,29 +57,13 @@ class Book:
         print('{}/{} 进度:{:^3.0f}%'.format(self.progress_bar, download_length, percentage), end='\r')
         self.progress_bar += 1
 
-    def output_chapter_content(self, chapter_content, chapter_title="", intro=False):
-        content = ""
-        if intro is True:
-            for line in chapter_content.splitlines():
-                chapter_line = line.strip("　").strip()
-                if chapter_line != "":
-                    content += "\n" + chapter_line[:60]
-            return content
-        for line in chapter_content.splitlines():
-            chapter_line = line.strip("　").strip()
-            if chapter_line != "" and len(chapter_line) >= 2:
-                if "http" in chapter_line:
-                    continue
-                content += "\n　　{}".format(chapter_line)
-        return f"{chapter_title}\n\n{content}"
-
     def download_content(self, chapter_url, file_id, download_length):
         self.pool_sema.acquire()
         chapter_title, chapter_content = API.Chapter.download_chapter(chapter_url)
         file_name = f"{file_id}-{del_title(chapter_title)}.txt"
         write(
             f"{Vars.cfg.data.get('config_book')}/{self.book_name}/{file_name}", 'w',
-            self.output_chapter_content(chapter_content, chapter_title)
+            output_chapter_content(chapter_content, chapter_title)
         )
         self.progress(download_length)
         self.pool_sema.release()
@@ -76,7 +76,7 @@ class Book:
             content = write(os.path.join(config_dir, file_name), 'r').read()
             chapter_index = file_name.split('-')[1].replace('.txt', '')
             Vars.epub_info.add_chapter(chapter_index, content, file_name.split('-')[0])
-            write(f'{save_dir}/{self.book_name}.txt', 'a', "\n\n"+content)
+            write(f'{save_dir}/{self.book_name}.txt', 'a', "\n\n\n" + content)
         Vars.epub_info.save()
 
     def get_chapter_url(self):

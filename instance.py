@@ -19,12 +19,6 @@ def makedirs(file_path: str):
         os.makedirs(os.path.join(file_path))
 
 
-def time_(time_stamp: int):
-    if type(time_stamp) is not int:
-        time_stamp = int(time_stamp)
-    return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time_stamp))
-
-
 def isCN(book_name):
     cn_no = 0
     for ch in book_name:
@@ -45,7 +39,7 @@ def inputs_(prompt, default=None):
 def del_title(title: str):
     """删去windowns不规范字符"""
     title = title.replace("\x06", "").replace("\x05", "").replace("\x07", "")
-    return re.sub(r'[？?*|“<>:/\\]', '', title)
+    return re.sub(r'[？?。*|“<>:/\\]', '', title)
 
 
 def content_(content: str):
