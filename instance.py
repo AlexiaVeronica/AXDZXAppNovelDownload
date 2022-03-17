@@ -25,6 +25,14 @@ def time_(time_stamp: int):
     return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time_stamp))
 
 
+def isCN(book_name):
+    cn_no = 0
+    for ch in book_name:
+        if '\u4e00' <= ch <= '\u9fff':
+            cn_no += 1
+    return 40 - cn_no
+
+
 def inputs_(prompt, default=None):
     while True:
         ret = input(prompt)
@@ -84,9 +92,9 @@ def setup_config():
         config_change = True
     if type(Vars.cfg.data.get('help')) is not str or Vars.cfg.data.get('help') == "":
         Vars.cfg.data['help'] = 'https://m.aixdzs.com/\nd | bookid\t\t\t\t\t———输入书籍序号下载单本小说\nt | ' \
-                      'tagid\t\t\t\t\t———输入分类号批量下载分类小说\nn | bookname\t\t\t\t\t———下载单本小说\nh | ' \
-                      'help\t\t\t\t\t———获取使用程序帮助\nq | quit\t\t\t\t\t———退出运行的程序\nm | method\t\t\t\t\t———切换多线程和多进程\np | ' \
-                      'pool\t\t\t\t\t———改变线程数目\nu | updata\t\t\t\t\t———下载指定文本中的bookid '
+                                'tagid\t\t\t\t\t———输入分类号批量下载分类小说\nn | bookname\t\t\t\t\t———下载单本小说\nh | ' \
+                                'help\t\t\t\t\t———获取使用程序帮助\nq | quit\t\t\t\t\t———退出运行的程序\nm | method\t\t\t\t\t———切换多线程和多进程\np | ' \
+                                'pool\t\t\t\t\t———改变线程数目\nu | updata\t\t\t\t\t———下载指定文本中的bookid '
         config_change = True
     if type(Vars.cfg.data.get('tag')) is not dict or Vars.cfg.data.get('tag') == "":
         Vars.cfg.data['tag'] = {1: '玄幻', 2: '奇幻', 3: '武侠', 4: '仙侠', 5: '都市', 6: '职场', 7: '历史',

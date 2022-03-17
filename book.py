@@ -22,17 +22,13 @@ class Book:
         self.last_chapter = book_info.get('lastChapter')
 
     def show_book_info(self) -> str:
-        show_info = '书籍书名: {}\n'.format(self.book_name)
-        show_info += '书籍作者: {}\n'.format(self.author_name)
-        show_info += '书籍状态: {}\n'.format(self.book_state)
-        show_info += '书籍字数: {}\n'.format(self.word_count)
-        show_info += '更新时间: {}\n'.format(self.book_updated)
-        show_info += '书籍标签: {}\n'.format(self.book_tag)
-        show_info += '最新章节: {}\n'.format(self.last_chapter)
+        show_info = '作者:{0:<{2}}状态:{1}\n'.format(self.author_name, self.book_state, isCN(self.author_name))
+        show_info += '标签:{0:<{2}}字数:{1}\n'.format(self.book_tag, self.word_count, isCN(self.book_tag))
+        show_info += '最新:{0:<{2}}更新:{1}\n'.format(self.last_chapter, self.book_updated, isCN(self.last_chapter))
         print(show_info)
-        return '{}简介信息:\n {}'.format(show_info, self.book_intro)
+        return '{}简介信息:\n{}'.format(show_info, self.output_chapter_content(self.book_intro, intro=True))
 
-    def book_information(self, config_dir: str, save_dir: str):
+    def download_book(self, config_dir: str, save_dir: str):
         if self.last_chapter is not None:
             write(save_dir + '/' + f'{self.book_name}.txt', 'w', self.show_book_info())
         if self.download_chapter_threading() == 0:
@@ -45,11 +41,17 @@ class Book:
         print('{}/{} 进度:{:^3.0f}%'.format(self.progress_bar, download_length, percentage), end='\r')
         self.progress_bar += 1
 
-    def output_chapter_content(self, chapter_title, chapter_content):
+    def output_chapter_content(self, chapter_content, chapter_title="", intro=False):
         content = ""
+        if intro is True:
+            for line in chapter_content.splitlines():
+                chapter_line = line.strip("　").strip()
+                if chapter_line != "":
+                    content += "\n" + chapter_line[:60]
+            return content
         for line in chapter_content.splitlines():
             chapter_line = line.strip("　").strip()
-            if chapter_line != "" or len(chapter_line) > 2:
+            if chapter_line != "" and len(chapter_line) >= 2:
                 if "http" in chapter_line:
                     continue
                 content += "\n　　{}".format(chapter_line)
@@ -61,7 +63,7 @@ class Book:
         file_name = f"{file_id}-{del_title(chapter_title)}.txt"
         write(
             f"{Vars.cfg.data.get('config_book')}/{self.book_name}/{file_name}", 'w',
-            self.output_chapter_content(chapter_title, chapter_content)
+            self.output_chapter_content(chapter_content, chapter_title)
         )
         self.progress(download_length)
         self.pool_sema.release()

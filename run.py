@@ -30,7 +30,7 @@ def shell_book(inputs):  # 通过小说ID下载单本小说
             config_dir = Vars.cfg.data.get('config_book') + "/" + book_name
             save_dir = Vars.cfg.data.get('save_book') + "/" + book_name
             makedirs(config_dir), makedirs(save_dir)
-            Vars.book_info.book_information(config_dir, save_dir)
+            Vars.book_info.download_book(config_dir, save_dir)
         else:
             print("获取书籍信息失败，请检查id或者重新尝试！")
     else:
