@@ -10,7 +10,7 @@ class Book:
         self.index = index
         self.progress_bar = 1
         self.thread_list = list()
-        self.pool_sema = threading.BoundedSemaphore(5)
+        self.pool_sema = threading.BoundedSemaphore(10)
         self.book_name = book_info.get('title')
         self.book_id = book_info.get('_id')
         self.author_name = book_info.get('author')
@@ -35,16 +35,9 @@ class Book:
     def book_information(self, config_dir: str, save_dir: str):
         if self.last_chapter is not None:
             write(save_dir + '/' + f'{self.book_name}.txt', 'w', self.show_book_info())
-        self.download_chapter_threading()
-        file_name_list = os.listdir(config_dir)  # 获取目录文本名
-        file_name_list.sort(key=lambda x: int(x.split('-')[0]))  # 按照数字顺序排序文本
-        for file_name in file_name_list:  # 遍历文件名
-            """遍历合并文本所在的路径的单个文件"""
-            content = write(os.path.join(config_dir, file_name), 'r').read()
-            chapter_index = file_name.split('-')[1].replace('.txt', '')
-            Vars.epub_info.add_chapter(chapter_index, content, file_name.split('-')[0])
-            write(save_dir + '/' + f'{self.book_name}.txt', 'a', content)
-        Vars.epub_info.save()
+        if self.download_chapter_threading() == 0:
+            print("没有需要下载的章节！")
+        self.output_text_and_epub(config_dir, save_dir)
         print(self.book_name, '本地档案合并完毕')
 
     def progress(self, download_length):
@@ -62,15 +55,29 @@ class Book:
         )
         self.pool_sema.release()
 
-    def download_chapter_threading(self):
-        filename_list = ''.join(os.listdir(os.path.join(Vars.cfg.data.get('config_book'), self.book_name)))
-        download_chapter_list = [
+    def output_text_and_epub(self, config_dir, save_dir):
+        file_name_list = os.listdir(config_dir)  # 获取目录文本名
+        file_name_list.sort(key=lambda x: int(x.split('-')[0]))  # 按照数字顺序排序文本
+        for file_name in file_name_list:  # 遍历文件名
+            """遍历合并文本所在的路径的单个文件"""
+            content = write(os.path.join(config_dir, file_name), 'r').read()
+            chapter_index = file_name.split('-')[1].replace('.txt', '')
+            Vars.epub_info.add_chapter(chapter_index, content, file_name.split('-')[0])
+            write(save_dir + '/' + f'{self.book_name}.txt', 'a', content)
+        Vars.epub_info.save()
+
+    def get_chapter_url(self):
+        filename_list = os.listdir(os.path.join(Vars.cfg.data.get('config_book'), self.book_name))
+        chapter_list = [
             chapters.get('link') for chapters in API.Book.catalogue(self.book_id)
-            if chapters.get('link').split('/')[1].rjust(4, "0") + '-' not in filename_list
+            if chapters.get('link').split('/')[1].rjust(4, "0") + '-' not in ''.join(filename_list)
         ]
-        download_length = len(download_chapter_list)
-        if download_length == 0 and download_chapter_list == []:
-            return
+        return len(chapter_list), chapter_list
+
+    def download_chapter_threading(self):
+        download_length, download_chapter_list = self.get_chapter_url()
+        if download_length == 0:
+            return download_length
         file_id_list = [url.split('/')[1] for url in download_chapter_list]
         for index, chapter_url in enumerate(download_chapter_list):
             file_id = str(file_id_list[index]).rjust(4, "0")
