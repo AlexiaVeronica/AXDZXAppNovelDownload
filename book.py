@@ -47,10 +47,13 @@ class Book:
 
     def output_chapter_content(self, chapter_title, chapter_content):
         content = ""
-        for line in chapter_content.split('\r\n'):
-            if line.strip() != "" or line in ['\n', '\r\n']:
-                content += "　　{}".format(line.strip("　"))
-        return f"\n\n\n{chapter_title}\n\n{content}"
+        for line in chapter_content.splitlines():
+            chapter_line = line.strip("　").strip()
+            if chapter_line != "" or len(chapter_line) > 2:
+                if "http" in chapter_line:
+                    continue
+                content += "\n　　{}".format(chapter_line)
+        return f"{chapter_title}\n\n{content}"
 
     def download_content(self, chapter_url, file_id, download_length):
         self.pool_sema.acquire()
@@ -71,7 +74,7 @@ class Book:
             content = write(os.path.join(config_dir, file_name), 'r').read()
             chapter_index = file_name.split('-')[1].replace('.txt', '')
             Vars.epub_info.add_chapter(chapter_index, content, file_name.split('-')[0])
-            write(f'{save_dir}/{self.book_name}.txt', 'a', content)
+            write(f'{save_dir}/{self.book_name}.txt', 'a', "\n\n"+content)
         Vars.epub_info.save()
 
     def get_chapter_url(self):
