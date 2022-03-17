@@ -1,9 +1,8 @@
 import PySimpleGUI as sg
-import book
+import API, book, epub
 from instance import *
 
 setup_config()
-Vars.cfg.load()
 
 
 def main():
@@ -29,24 +28,43 @@ def main():
             sg.popup(text, title='免责声明')
 
         if event == '_downloader_':
-            novel_id = values['novel_id']
-            if novel_id != '':
-                book.Book(novel_id).book_information()
+            if values['novel_id'] != '':
+                Vars.book_info = API.Book.novel_info(values['novel_id'])
+                if Vars.book_info is not None and isinstance(Vars.book_info, dict):
+                    Vars.book_info = book.Book(Vars.book_info)
+                    book_name = Vars.book_info.book_name
+                    Vars.epub_info = epub.EpubFile(Vars.book_info.book_id, book_name, Vars.book_info.author_name)
+                    Vars.epub_info.add_intro(
+                        Vars.book_info.author_name, Vars.book_info.book_updated, Vars.book_info.last_chapter,
+                        Vars.book_info.book_intro, Vars.book_info.book_tag
+                    )
+                    print("开始下载《{}》".format(book_name))
+                    config_dir = Vars.cfg.data.get('config_book') + "/" + book_name
+                    save_dir = Vars.cfg.data.get('save_book') + "/" + book_name
+                    makedirs(config_dir), makedirs(save_dir)
+                    Vars.book_info.download_book(config_dir, save_dir)
             else:
                 sg.popup_timed('输入小说序号为空！', title='提醒')
 
-        # if event == '_charcountbegin_':
-        #     page = 0
-        #     # print(values['_TagName_'])
-        #     if values['_TagName_'] == '':
-        #         values['_TagName_'] = '百合'
-        #     tag_namber = Vars.cfg.data.get('tags_dict')[values['_TagName_']]
-        #     # print(values['_update_'])
-        #     if values['_update_'] == '':
-        #         values['_update_'] = Vars.cfg.data.get("updatedays")
-        #     get_day = str(values['_update_'])
-        #     is_vip = Vars.cfg.data.get("novelvip")
-        #     words_num = Vars.cfg.data.get('charcountbegin')
+    window.close()
+        # if event == '_tag_':
+        #         tag_id = inputs[1]
+        #         if not Vars.cfg.data.get('tag').get(tag_id):
+        #             print(f"{tag_id} 标签号不存在\n")
+        #             for key, Value in Vars.cfg.data.get('tag').items():
+        #                 print('{}:\t\t\t{}'.format(key, Value))
+        #             return
+        #         page = 0
+        #         while True:
+        #             tag_name = Vars.cfg.data.get('tag')[inputs[1]]
+        #             response = API.Tag.tag_info(inputs[1], tag_name, page)
+        #             if response is None: break
+        #             for index, tag_info_data in enumerate(response, start=1):
+        #                 print("\n\n{}分类 第{}本\n".format(tag_name, index))
+        #                 shell_book([index, tag_info_data.get('_id')])
+        #             page += 20
+        #     else:
+        #         print(API.Tag.get_type())
         #
         #     while True:
         #         response = BoluobaoAPI.Tag.tag_info(
@@ -75,8 +93,6 @@ def main():
         #             sg.Print('\t'.join(show_))
 
         # time.sleep(100)
-
-    window.close()
 
 
 main()
