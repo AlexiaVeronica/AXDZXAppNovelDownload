@@ -31,16 +31,18 @@ class Chapter:
     @staticmethod
     def download_chapter(chapter_id: str):
         api_url = UrlConstants.WEB_SITE + UrlConstants.CHAPTER_API.format(chapter_id)
-        return ahttp.get(api_url)
+        response = get(api_url)['chapter']
+        return response['title'], response['body']
 
 
 class Cover:
     @staticmethod
-    def download_cover(max_retry=10) -> str:
+    def download_cover(max_retry=1) -> str:
         for retry in range(max_retry):
-            response = HttpUtil.get('http://119.91.108.170:88/api/img/acg.php?return=json')
+            response = HttpUtil.get('https://acg.yanwz.cn/wallpaper/api.php')
+            print(response)
             if response.status_code == 200 and response.json().get("code") == "200":
-                return HttpUtil.get(response.json().get("acgurl")).content
+                return HttpUtil.get(response.content).content
             else:
                 print("msg:", response)
 

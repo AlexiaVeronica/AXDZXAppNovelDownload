@@ -1,3 +1,5 @@
+import threading
+
 import ahttp
 import API
 from instance import *
@@ -8,6 +10,9 @@ class Book:
 
     def __init__(self, book_info: dict, index=None):
         self.index = index
+        self.progress_bar = 1
+        self.thread_list = list()
+        self.pool_sema = threading.BoundedSemaphore(5)
         self.book_name = book_info.get('title')
         self.book_id = book_info.get('_id')
         self.author_name = book_info.get('author')
@@ -44,22 +49,41 @@ class Book:
         Vars.epub_info.save()
         print(self.book_name, '本地档案合并完毕')
 
+    def progress(self, download_length):
+        percentage = (self.progress_bar / download_length) * 100
+        print('{}/{} 进度:{:^3.0f}%'.format(self.progress_bar, download_length, percentage), end='\r')
+        self.progress_bar += 1
+
+    def download_content(self, chapter_url, file_id, download_length):
+        self.pool_sema.acquire()
+        chapter_title, chapter_content = API.Chapter.download_chapter(chapter_url)
+        self.progress(download_length)
+        write(
+            f"{Vars.cfg.data.get('config_book')}/{self.book_name}/{file_id}-{del_title(chapter_title)}.txt", 'w',
+            f"\n\n\n{chapter_title}\n\n{chapter_content}"
+        )
+        self.pool_sema.release()
+
     def download_chapter_threading(self):
         filename_list = ''.join(os.listdir(os.path.join(Vars.cfg.data.get('config_book'), self.book_name)))
         download_chapter_list = [
             chapters.get('link') for chapters in API.Book.catalogue(self.book_id)
             if chapters.get('link').split('/')[1].rjust(4, "0") + '-' not in filename_list
         ]
-        download_chapter_len = len(download_chapter_list)
-        if download_chapter_len != 0 and download_chapter_list != []:
-            chapter_dict = {
-                'chapter_id': [API.Chapter.download_chapter(url) for url in download_chapter_list],
-                'file_id': [url.split('/')[1] for url in download_chapter_list]
-            }
+        download_length = len(download_chapter_list)
+        if download_length == 0 and download_chapter_list == []:
+            return
+        file_id_list = [url.split('/')[1] for url in download_chapter_list]
+        for index, chapter_url in enumerate(download_chapter_list):
+            file_id = str(file_id_list[index]).rjust(4, "0")
+            thread = threading.Thread(
+                target=self.download_content, args=(chapter_url, file_id, download_length,)
+            )
+            self.thread_list.append(thread)
 
-            for page, data in enumerate(ahttp.run(chapter_dict['chapter_id'], pool=40, order=True)):
-                chapter_title = del_title(data.json()['chapter']['title'])
-                content = "\n\n\n{}\n\n{}".format(chapter_title, data.json()['chapter']['body'])
-                filename = str(chapter_dict['file_id'][page]).rjust(4, "0") + '-' + chapter_title + '.txt'
-                write(os.path.join(Vars.cfg.data.get('config_book'), self.book_name, filename), 'w', content)
-                print('下载进度:{:^3.0f}%'.format((page / download_chapter_len) * 100), end='\r')
+        for thread in self.thread_list:
+            thread.start()
+
+        for thread in self.thread_list:
+            thread.join()
+        self.thread_list.clear()
