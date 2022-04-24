@@ -62,14 +62,15 @@ def content_(content: str):
 def write(path: str, mode: str, info=None):
     if info is not None:
         try:
-            with open(path, f'{mode}', encoding='UTF-8', newline='') as file:
-                file.writelines(info)
-        except (UnicodeEncodeError, UnicodeDecodeError) as e:
+            with open(path, f'{mode}', encoding='utf-8', newline='') as file:
+                file.write(info)
+        except (UnicodeEncodeError, UnicodeDecodeError) as error:
+            print("error:", error)
             with open(path, f'{mode}', encoding='gbk', newline='') as file:
-                file.writelines(info)
+                file.write(info)
     else:
         try:
-            return open(path, f'{mode}', encoding='UTF-8')
+            return open(path, f'{mode}', encoding='utf-8')
         except (UnicodeEncodeError, UnicodeDecodeError) as e:
             return open(path, f'{mode}', encoding='gbk')
 
