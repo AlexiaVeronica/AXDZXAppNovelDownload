@@ -15,10 +15,7 @@ def download_book():
         Vars.book_info.author_name, Vars.book_info.book_updated, Vars.book_info.last_chapter,
         Vars.book_info.book_intro, Vars.book_info.book_tag
     )
-    config_dir = Vars.cfg.data.get('config_book') + "/" + book_name
-    save_dir = Vars.cfg.data.get('save_book') + "/" + book_name
-    makedirs(config_dir), makedirs(save_dir)
-    Vars.book_info.download_book(config_dir, save_dir)
+    Vars.book_info.download_book()
 
 
 def download_tag(tag_id):

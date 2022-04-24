@@ -1,3 +1,4 @@
+import operator
 import threading
 import API
 from instance import *
@@ -25,8 +26,10 @@ class Book:
     def __init__(self, book_info: dict, index=None):
         self.index = index
         self.progress_bar = 1
+        self.config_json = []
+        self.chapter_id_list = []
         self.thread_list = list()
-        self.pool_sema = threading.BoundedSemaphore(10)
+        self.pool_sema = threading.BoundedSemaphore(16)
         self.book_name = book_info.get('title')
         self.book_id = book_info.get('_id')
         self.author_name = book_info.get('author')
@@ -36,20 +39,25 @@ class Book:
         self.word_count = book_info.get('wordCount')
         self.book_updated = book_info.get('updated')
         self.last_chapter = del_title(book_info.get('lastChapter'))
+        self.book_config = f"{Vars.cfg.data.get('config_book')}/{self.book_name}" + '.json'
 
     def show_book_info(self) -> str:
         show_info = '作者:{0:<{2}}状态:{1}\n'.format(self.author_name, self.book_state, isCN(self.author_name))
         show_info += '标签:{0:<{2}}字数:{1}\n'.format(self.book_tag, self.word_count, isCN(self.book_tag))
         show_info += '最新:{0:<{2}}更新:{1}\n'.format(self.last_chapter, self.book_updated, isCN(self.last_chapter))
         print(show_info)
+        if not os.path.exists(self.book_config):
+            open(self.book_config, "w").write("[]")
+        self.config_json = json.loads(open(self.book_config, 'r', encoding='utf-8').read())
         return '{}简介:\n{}'.format(show_info, output_chapter_content(self.book_intro, intro=True))
 
-    def download_book(self, config_dir: str, save_dir: str):
+    def download_book(self):
+        save_dir = os.path.join(Vars.cfg.data.get('save_book'), self.book_name, f'{self.book_name}.txt')
         if self.last_chapter is not None:
-            write(save_dir + '/' + f'{self.book_name}.txt', 'w', self.show_book_info())
+            write(save_dir, 'w', self.show_book_info())
         if self.download_chapter_threading() == 0:
             print("没有需要下载的章节！")
-        self.output_text_and_epub(config_dir, save_dir)
+        self.output_text_and_epub(save_dir)
         print(self.book_name, '本地档案合并完毕')
 
     def progress(self, download_length):
@@ -57,45 +65,49 @@ class Book:
         print('{}/{} 进度:{:^3.0f}%'.format(self.progress_bar, download_length, percentage), end='\r')
         self.progress_bar += 1
 
-    def download_content(self, chapter_url, file_id, download_length):
+    def download_content(self, chapter_url, chapter_index, download_length):
         self.pool_sema.acquire()
         chapter_title, chapter_content = API.Chapter.download_chapter(chapter_url)
-        file_name = f"{file_id}-{del_title(chapter_title)}.txt"
-        write(
-            f"{Vars.cfg.data.get('config_book')}/{self.book_name}/{file_name}", 'w',
-            output_chapter_content(chapter_content, chapter_title)
-        )
+        content_config = {
+            'index': chapter_index,
+            'title': chapter_title,
+            'content': output_chapter_content(chapter_content, chapter_title),
+        }
+        self.config_json.append(content_config)
         self.progress(download_length)
         self.pool_sema.release()
 
-    def output_text_and_epub(self, config_dir, save_dir):
-        file_name_list = os.listdir(config_dir)  # 获取目录文本名
-        file_name_list.sort(key=lambda x: int(x.split('-')[0]))  # 按照数字顺序排序文本
-        for file_name in file_name_list:  # 遍历文件名
+    def output_text_and_epub(self, save_dir):
+        output_text = sorted(self.config_json, key=lambda list1: int(list1["index"]))  # 按照数字顺序排序文本
+        for config_info in output_text:  # 遍历文件名
             """遍历合并文本所在的路径的单个文件"""
-            content = write(os.path.join(config_dir, file_name), 'r').read()
-            chapter_index = file_name.split('-')[1].replace('.txt', '')
-            Vars.epub_info.add_chapter(chapter_index, content, file_name.split('-')[0])
-            write(f'{save_dir}/{self.book_name}.txt', 'a', "\n\n\n" + content)
+            Vars.epub_info.add_chapter(config_info['title'], config_info['content'], config_info['index'])
+            write(save_dir, 'a', "\n\n\n" + config_info['content'])
         Vars.epub_info.save()
+        self.config_json.clear()
+        self.chapter_id_list.clear()
 
     def get_chapter_url(self):
-        filename_list = os.listdir(os.path.join(Vars.cfg.data.get('config_book'), self.book_name))
-        chapter_list = [
-            chapters.get('link') for chapters in API.Book.catalogue(self.book_id)
-            if chapters.get('link').split('/')[1].rjust(4, "0") + '-' not in ''.join(filename_list)
-        ]
-        return len(chapter_list), chapter_list
+        response = API.Book.catalogue(self.book_id)
+        config_tests = [chapters.get('title') for chapters in self.config_json]
+        if len(self.config_json) == 0:
+            link_list = [chapters.get('link') for chapters in response]
+            return len(link_list), link_list
+        for index, info in enumerate(response):
+            if info['title'] in config_tests and info.get('content') != "":
+                continue
+            self.chapter_id_list.append(info['link'])
+
+        return len(self.chapter_id_list), self.chapter_id_list
 
     def download_chapter_threading(self):
         download_length, download_chapter_list = self.get_chapter_url()
         if download_length == 0:
             return download_length
-        file_id_list = [url.split('/')[1] for url in download_chapter_list]
         for index, chapter_url in enumerate(download_chapter_list):
-            file_id = str(file_id_list[index]).rjust(4, "0")
+            chapter_index = chapter_url.split('/')[1]
             thread = threading.Thread(
-                target=self.download_content, args=(chapter_url, file_id, download_length,)
+                target=self.download_content, args=(chapter_url, chapter_index, download_length,)
             )
             self.thread_list.append(thread)
 
@@ -105,3 +117,5 @@ class Book:
         for thread in self.thread_list:
             thread.join()
         self.thread_list.clear()
+        with open(self.book_config, 'w', encoding='utf-8') as f:
+            json.dump(self.config_json, f, indent=4, ensure_ascii=False)
