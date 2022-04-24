@@ -55,12 +55,11 @@ class Book:
         save_dir = os.path.join(Vars.cfg.data.get('save_book'), self.book_name, f'{self.book_name}.txt')
         if self.last_chapter is not None:
             write(save_dir, 'w', self.show_book_info())
-
-        download_length, chapter_list = self.get_chapter_url()
-        if download_length == 0:
+        chapter_list = self.get_chapter_url()
+        if len(chapter_list) == 0:
             print("没有需要下载的章节！")
         else:
-            self.download_chapter_threading(download_length, chapter_list)
+            self.download_chapter_threading(len(chapter_list), chapter_list)
             print('\n下载完成！')
         self.output_text_and_epub(save_dir)
         print(self.book_name, '本地档案合并完毕')
@@ -95,7 +94,7 @@ class Book:
     def get_chapter_url(self):
         response = API.Book.catalogue(self.book_id)
         if response is None:
-            return 0, []
+            return self.chapter_id_list
         config_tests = [chapters.get('title') for chapters in self.config_json]
         if len(self.config_json) == 0:
             link_list = [chapters.get('link') for chapters in response]
@@ -105,7 +104,7 @@ class Book:
                 continue
             self.chapter_id_list.append(info['link'])
 
-        return len(self.chapter_id_list), self.chapter_id_list
+        return self.chapter_id_list
 
     def download_chapter_threading(self, download_length, chapter_list):
         if download_length == 0:

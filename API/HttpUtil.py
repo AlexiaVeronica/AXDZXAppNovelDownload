@@ -15,6 +15,7 @@ def MaxRetry(func, max_retry=5):
                 return response
             else:
                 print("尝试第:{}次".format(retry + 1))
+
     return wrapper
 
 
@@ -28,17 +29,15 @@ def headers():
     }
 
 
-@MaxRetry
-def get(api_url: str, params=None, **kwargs):
-    try:
-        response = requests.get(api_url, headers=headers(), params=params, **kwargs)
-        if response.status_code == 200:
-            return response
-        else:
-            return False
-    except requests.exceptions.RequestException as error:
-        print("\nGet url:{} Error:{}".format(api_url, error))
-        return False
+def get(api_url: str, params=None, max_retry: int = 5, **kwargs):
+    for retry in range(max_retry):
+        try:
+            response = requests.get(api_url, headers=headers(), params=params, **kwargs)
+            if response.status_code == 200:
+                return response
+        except requests.exceptions.RequestException as error:
+            if retry >= 2:
+                print("\nGet url:{} Error:{}".format(api_url, error))
 
 
 @MaxRetry
