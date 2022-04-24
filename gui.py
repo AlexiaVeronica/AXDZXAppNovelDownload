@@ -19,14 +19,14 @@ def download_book():
 
 
 def download_tag(tag_id):
-    if not Vars.cfg.data.get('tag').get(tag_id):
+    if not Msgs.msg_tag.get(tag_id):
         print(f"{tag_id} 标签号不存在\n")
-        for key, Value in Vars.cfg.data.get('tag').items():
+        for key, Value in Msgs.msg_tag.items():
             print('{}:\t\t\t{}'.format(key, Value))
         return
     page = 0
     while True:
-        tag_name = Vars.cfg.data.get('tag')[tag_id]
+        tag_name = Msgs.msg_tag[tag_id]
         response = API.Tag.tag_info(tag_id, tag_name, page)
         if response is None: break
         for index, tag_info_data in enumerate(response, start=1):

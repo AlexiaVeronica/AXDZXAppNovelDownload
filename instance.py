@@ -9,6 +9,22 @@ class Vars:
     epub_info = None
 
 
+class Msgs:
+    msg_help = [
+        "输入指令, 输入首字母即可 | 爱下电子书网址:https://m.aixdzs.com/",
+        "d | bookid\t\t\t\t\t———输入书籍序号下载单本小说",
+        "t | tagid\t\t\t\t\t———输入分类号批量下载分类小说",
+        "n | bookname\t\t\t\t\t———下载单本小说",
+        "h | help\t\t\t\t\t———获取使用程序帮助",
+        "q | quit\t\t\t\t\t———退出运行的程序",
+        "m | method\t\t\t\t\t———切换多线程和多进程",
+        "p | pool\t\t\t\t\t———改变线程数目",
+        "u | updata\t\t\t\t\t———下载指定文本中的bookid ",
+    ]
+    msg_tag = {1: '玄幻', 2: '奇幻', 3: '武侠', 4: '仙侠', 5: '都市', 6: '职场', 7: '历史',
+               8: '军事', 9: '游戏', 10: '竞技', 11: '科幻', 12: '灵异', 13: '同人', 14: '轻小说'}
+
+
 def mkdir(file_path: str):
     if not os.path.exists(file_path):
         os.mkdir(file_path)
@@ -34,12 +50,6 @@ def inputs_(prompt, default=None):
             return ret
         elif default is not None:
             return default
-
-
-def del_title(title: str):
-    """删去windowns不规范字符"""
-    title = title.replace("\x06", "").replace("\x05", "").replace("\x07", "")
-    return re.sub(r'[？?。*|“<>:/\\]', '', title)
 
 
 def content_(content: str):
@@ -83,16 +93,6 @@ def setup_config():
         config_change = True
     if type(Vars.cfg.data.get('show_book_info')) is not str or Vars.cfg.data.get('show_book_info') == "":
         Vars.cfg.data['show_book_info'] = '书名:{}\n作者:{}\n状态:{}\n字数:{}\n更新:{}\n标签:{}\n最后更新章节:{}\n简介信息\n{}'
-        config_change = True
-    if type(Vars.cfg.data.get('help')) is not str or Vars.cfg.data.get('help') == "":
-        Vars.cfg.data['help'] = 'https://m.aixdzs.com/\nd | bookid\t\t\t\t\t———输入书籍序号下载单本小说\nt | ' \
-                                'tagid\t\t\t\t\t———输入分类号批量下载分类小说\nn | bookname\t\t\t\t\t———下载单本小说\nh | ' \
-                                'help\t\t\t\t\t———获取使用程序帮助\nq | quit\t\t\t\t\t———退出运行的程序\nm | method\t\t\t\t\t———切换多线程和多进程\np | ' \
-                                'pool\t\t\t\t\t———改变线程数目\nu | updata\t\t\t\t\t———下载指定文本中的bookid '
-        config_change = True
-    if type(Vars.cfg.data.get('tag')) is not dict or Vars.cfg.data.get('tag') == "":
-        Vars.cfg.data['tag'] = {1: '玄幻', 2: '奇幻', 3: '武侠', 4: '仙侠', 5: '都市', 6: '职场', 7: '历史',
-                                8: '军事', 9: '游戏', 10: '竞技', 11: '科幻', 12: '灵异', 13: '同人', 14: '轻小说'}
         config_change = True
 
     if config_change:

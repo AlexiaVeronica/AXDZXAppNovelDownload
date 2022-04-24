@@ -98,7 +98,7 @@ class Book:
         config_tests = [chapters.get('title') for chapters in self.config_json]
         if len(self.config_json) == 0:
             link_list = [chapters.get('link') for chapters in response]
-            return len(link_list), link_list
+            return link_list
         for index, info in enumerate(response):
             if info['title'] in config_tests and info.get('content') != "":
                 continue
@@ -109,10 +109,10 @@ class Book:
     def download_chapter_threading(self, download_length, chapter_list):
         if download_length == 0:
             return download_length
+
         for index, chapter_url in enumerate(chapter_list):
-            chapter_index = chapter_url.split('/')[1]
             thread = threading.Thread(
-                target=self.download_content, args=(chapter_url, chapter_index, download_length,)
+                target=self.download_content, args=(chapter_url, chapter_url.split('/')[1], download_length,)
             )
             self.thread_list.append(thread)
 

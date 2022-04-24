@@ -59,18 +59,19 @@ def get_pool(inputs):
 
 def shell_tag(inputs):
     if len(inputs) >= 2:
-        tag_id = inputs[1]
-        if not Vars.cfg.data.get('tag').get(tag_id):
+        tag_id = int(inputs[1])
+        if Msgs.msg_tag.get(tag_id) is None:
             print(f"{tag_id} 标签号不存在\n")
-            for key, Value in Vars.cfg.data.get('tag').items():
+            for key, Value in Msgs.msg_tag.items():
                 print('{}:\t\t\t{}'.format(key, Value))
             return
         page = 0
         while True:
-            tag_name = Vars.cfg.data.get('tag')[inputs[1]]
+            tag_name = Msgs.msg_tag[tag_id]
             response = API.Tag.tag_info(inputs[1], tag_name, page)
             if response is None: break
             for index, tag_info_data in enumerate(response, start=1):
+                print(tag_info_data)
                 print("\n\n{}分类 第{}本\n".format(tag_name, index))
                 shell_book([index, tag_info_data.get('_id')])
             page += 20
@@ -116,13 +117,13 @@ def shell():
     if len(sys.argv) > 1:
         command_line, inputs = True, sys.argv[1:]
     else:
-        print(Vars.cfg.data.get('help'))
+        print('\n'.join(Msgs.msg_help))
         command_line, inputs = False, re.split('\\s+', inputs_('>').strip())
     while True:
         if inputs[0].startswith('q') or inputs[0] == '--quit':
             sys.exit("已退出程序")
         if inputs[0] == 'h' or inputs[0] == '--help':
-            print(Vars.cfg.data.get('help'))
+            print('\n'.join(Msgs.msg_help))
         elif inputs[0] == 't' or inputs[0] == '--tag':
             shell_tag(inputs)
         elif inputs[0] == 'd' or inputs[0] == '--download':
