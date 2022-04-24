@@ -21,6 +21,8 @@ class Msgs:
         "p | pool\t\t\t\t\t———改变线程数目",
         "u | updata\t\t\t\t\t———下载指定文本中的bookid ",
     ]
+    msg_agree_terms = '是否以仔细阅读且同意LICENSE中叙述免责声明\n如果同意声明，请输入英文 \"yes\" 或者中文 \"同意\" "\
+            "后按Enter建，如果不同意请关闭此程式'
     msg_tag = {1: '玄幻', 2: '奇幻', 3: '武侠', 4: '仙侠', 5: '都市', 6: '职场', 7: '历史',
                8: '军事', 9: '游戏', 10: '竞技', 11: '科幻', 12: '灵异', 13: '同人', 14: '轻小说'}
 
@@ -81,24 +83,16 @@ def setup_config():
     if type(Vars.cfg.data.get('config_book')) is not str or Vars.cfg.data.get('config_book') == "":
         Vars.cfg.data['config_book'] = 'config'
         config_change = True
-    if type(Vars.cfg.data.get('Pool')) is not int or Vars.cfg.data.get('ThVars.cfg.data_Pool') == "":
-        Vars.cfg.data['Pool'] = 12
-        config_change = True
-    if type(Vars.cfg.data.get('agreed_to_Vars.cfg.datame')) is not str or Vars.cfg.data.get(
-            'agreed_to_Vars.cfg.datame') == "":
-        Vars.cfg.data['agreed_to_Vars.cfg.datame'] = 'No'
-        config_change = True
-    if type(Vars.cfg.data.get('agree_terms')) is not str or Vars.cfg.data.get('agree_terms') == "":
-        Vars.cfg.data['agree_terms'] = '是否以仔细阅读且同意LICENSE中叙述免责声明\n如果同意声明，请输入英文 \"yes\" 或者中文 \"同意\" 后按Enter建，如果不同意请关闭此程式'
-        config_change = True
-    if type(Vars.cfg.data.get('show_book_info')) is not str or Vars.cfg.data.get('show_book_info') == "":
-        Vars.cfg.data['show_book_info'] = '书名:{}\n作者:{}\n状态:{}\n字数:{}\n更新:{}\n标签:{}\n最后更新章节:{}\n简介信息\n{}'
+    if type(Vars.cfg.data.get('max_threads')) is not int or Vars.cfg.data.get('max_threads') == "":
+        Vars.cfg.data['max_threads'] = 12
         config_change = True
 
+    if type(Vars.cfg.data.get('real_time_cache')) is not bool:
+        Vars.cfg.data['real_time_cache'] = False
+        config_change = True
     if config_change:
         Vars.cfg.save()
-        if os.path.exists(Vars.cfg.data.get('save_book')) and os.path.exists(Vars.cfg.data.get('config_book')):
-            pass
-        else:
+        if not os.path.exists(Vars.cfg.data.get('save_book')):
             mkdir(Vars.cfg.data.get('save_book'))
+        if not os.path.exists(Vars.cfg.data.get('config_book')):
             mkdir(Vars.cfg.data.get('config_book'))

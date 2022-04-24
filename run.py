@@ -6,7 +6,7 @@ from instance import *
 
 def agreed_read_readme():
     if Vars.cfg.data.get('agreed_to_readme') != 'yes':
-        print(Vars.cfg.data.get('agree_terms'))
+        print(Msgs.msg_agree_terms)
         confirm = inputs_('>').strip()
         if confirm == 'yes' or confirm == '同意':
             Vars.cfg.data['agreed_to_readme'] = 'yes'
@@ -58,7 +58,7 @@ def get_pool(inputs):
 
 
 def shell_tag(inputs):
-    if len(inputs) >= 2:
+    if len(inputs) >= 2 and inputs[1].isdigit():
         tag_id = int(inputs[1])
         if Msgs.msg_tag.get(tag_id) is None:
             print(f"{tag_id} 标签号不存在\n")
@@ -71,7 +71,6 @@ def shell_tag(inputs):
             response = API.Tag.tag_info(inputs[1], tag_name, page)
             if response is None: break
             for index, tag_info_data in enumerate(response, start=1):
-                print(tag_info_data)
                 print("\n\n{}分类 第{}本\n".format(tag_name, index))
                 shell_book([index, tag_info_data.get('_id')])
             page += 20

@@ -1,4 +1,3 @@
-import operator
 import threading
 import API
 from instance import *
@@ -29,7 +28,7 @@ class Book:
         self.config_json = []
         self.chapter_id_list = []
         self.thread_list = list()
-        self.pool_sema = threading.BoundedSemaphore(32)
+        self.pool_sema = threading.BoundedSemaphore(Vars.cfg.data.get('max_threads'))
         self.book_name = book_info.get('title')
         self.book_id = book_info.get('_id')
         self.author_name = book_info.get('author')
@@ -69,7 +68,7 @@ class Book:
         print('{}/{} 进度:{:^3.0f}%'.format(self.progress_bar, download_length, percentage), end='\r')
         self.progress_bar += 1
 
-    def download_content(self, chapter_url, chapter_index, download_length):
+    def thread_download_content(self, chapter_url, chapter_index, download_length):
         self.pool_sema.acquire()
         chapter_title, chapter_content = API.Chapter.download_chapter(chapter_url)
         content_config = {
@@ -78,6 +77,9 @@ class Book:
             'content': output_chapter_content(chapter_content, chapter_title),
         }
         self.config_json.append(content_config)
+        if Vars.cfg.data.get('real_time_cache'):
+            with open(self.book_config, 'w', encoding='utf-8') as f:
+                json.dump(self.config_json, f, ensure_ascii=False)
         self.progress(download_length)
         self.pool_sema.release()
 
@@ -112,7 +114,7 @@ class Book:
 
         for index, chapter_url in enumerate(chapter_list):
             thread = threading.Thread(
-                target=self.download_content, args=(chapter_url, chapter_url.split('/')[1], download_length,)
+                target=self.thread_download_content, args=(chapter_url, chapter_url.split('/')[1], download_length,)
             )
             self.thread_list.append(thread)
 
@@ -123,4 +125,4 @@ class Book:
             thread.join()
         self.thread_list.clear()
         with open(self.book_config, 'w', encoding='utf-8') as f:
-            json.dump(self.config_json, f, indent=4, ensure_ascii=False)
+            json.dump(self.config_json, f, ensure_ascii=False)
