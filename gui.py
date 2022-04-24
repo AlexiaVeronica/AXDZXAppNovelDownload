@@ -8,14 +8,14 @@ from instance import *
 setup_config()
 
 
-def download_book():
+def start_downloading_novels():
     book_name = Vars.book_info.book_name
     Vars.epub_info = epub.EpubFile(Vars.book_info.book_id, book_name, Vars.book_info.author_name)
     Vars.epub_info.add_intro(
         Vars.book_info.author_name, Vars.book_info.book_updated, Vars.book_info.last_chapter,
         Vars.book_info.book_intro, Vars.book_info.book_tag
     )
-    Vars.book_info.download_book()
+    Vars.book_info.start_downloading_novels()
 
 
 def download_tag(tag_id):
@@ -35,7 +35,7 @@ def download_tag(tag_id):
             if Vars.book_info is not None and isinstance(Vars.book_info, dict):
                 Vars.book_info = book.Book(Vars.book_info)
                 print('开始下载{}'.format(Vars.book_info.book_name))
-                download_book()
+                start_downloading_novels()
             else:
                 print("获取失败")
         page += 20
@@ -71,7 +71,7 @@ def main():
                 if Vars.book_info is not None and isinstance(Vars.book_info, dict):
                     Vars.book_info = book.Book(Vars.book_info)
                     sg.popup_cancel('开始下载{}'.format(Vars.book_info.book_name))
-                    threading.Thread(target=download_book).start()
+                    threading.Thread(target=start_downloading_novels).start()
                 else:
                     print("获取失败")
             else:

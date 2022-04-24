@@ -28,7 +28,7 @@ def shell_book(inputs):  # 通过小说ID下载单本小说
             )
             print("开始下载《{}》".format(book_name))
             makedirs(Vars.cfg.data.get('save_book') + "/" + book_name)
-            Vars.book_info.download_book()
+            Vars.book_info.start_downloading_novels()
         else:
             print("获取书籍信息失败，请检查id或者重新尝试！")
     else:

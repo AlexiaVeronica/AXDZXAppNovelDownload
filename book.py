@@ -50,7 +50,7 @@ class Book:
         self.config_json = json.loads(open(self.book_config, 'r', encoding='utf-8').read())
         return '{}简介:\n{}'.format(show_info, output_chapter_content(self.book_intro, intro=True))
 
-    def download_book(self):
+    def start_downloading_novels(self):
         save_dir = os.path.join(Vars.cfg.data.get('save_book'), self.book_name, f'{self.book_name}.txt')
         if self.last_chapter is not None:
             write(save_dir, 'w', self.show_book_info())
@@ -63,9 +63,8 @@ class Book:
         self.output_text_and_epub(save_dir)
         print(self.book_name, '本地档案合并完毕')
 
-    def progress(self, download_length):
-        percentage = (self.progress_bar / download_length) * 100
-        print('{}/{} 进度:{:^3.0f}%'.format(self.progress_bar, download_length, percentage), end='\r')
+    def progress_count(self, length):
+        print('{}/{} 进度:{:^3.0f}%'.format(self.progress_bar, length, (self.progress_bar / length) * 100), end='\r')
         self.progress_bar += 1
 
     def thread_download_content(self, chapter_url, chapter_index, download_length):
@@ -80,18 +79,16 @@ class Book:
         if Vars.cfg.data.get('real_time_cache'):
             with open(self.book_config, 'w', encoding='utf-8') as f:
                 json.dump(self.config_json, f, ensure_ascii=False)
-        self.progress(download_length)
+        self.progress_count(download_length)
         self.pool_sema.release()
 
     def output_text_and_epub(self, save_dir):
         self.config_json = sorted(self.config_json, key=lambda list1: int(list1["index"]))  # 按照数字顺序排序文本
         for config_info in self.config_json:  # 遍历文件名
-            """遍历合并文本所在的路径的单个文件"""
             Vars.epub_info.add_chapter(config_info['title'], config_info['content'], config_info['index'])
+
         write(save_dir, 'a', ''.join(["\n\n\n" + config_info['content'] for config_info in self.config_json]))
-        Vars.epub_info.save()
-        self.config_json.clear()
-        self.chapter_id_list.clear()
+        Vars.epub_info.save(), self.config_json.clear(), self.chapter_id_list.clear()
 
     def get_chapter_url(self):
         response = API.Book.catalogue(self.book_id)
