@@ -31,7 +31,7 @@ class EpubFile:
 
     def add_chapter(self, chapter_title: str, content: str, serial_number: str):
         chapter_serial = epub.EpubHtml(
-            title=chapter_title, file_name=str(serial_number).rjust(4, "0") + '-' + chapter_title + '.xhtml',
+            title=chapter_title, file_name=str(serial_number).rjust(4, "0") + '.xhtml',
             lang='zh-CN', uid='chapter_{}'.format(serial_number)
         )
 

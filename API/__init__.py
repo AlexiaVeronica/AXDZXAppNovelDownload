@@ -18,6 +18,7 @@ class Book:
     def catalogue(novel_id: int, max_retry=5):
         for retry in range(max_retry):
             response = get(UrlConstants.BOOK_CATALOGUE.format(novel_id))
+            # print(response)
             if response.get('mixToc').get('chapters') is not None:
                 return response.get('mixToc').get('chapters')
 
