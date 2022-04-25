@@ -21,7 +21,6 @@ import uuid
 import posixpath as zip_path
 import os.path
 from collections import OrderedDict
-from urllib.parse import unquote
 from lxml import etree
 import ebooklib
 from ebooklib.utils import parse_string, parse_html_string, guess_type, get_pages_for_items
@@ -53,10 +52,13 @@ NCX_XML = six.b('''<!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN" "http://ww
 <ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1" />''')
 
 NAV_XML = six.b(
-    '''<?xml version="1.0" encoding="utf-8"?><!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"/>''')
+    '''<?xml version="1.0" encoding="utf-8"?><!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml" 
+    xmlns:epub="http://www.idpf.org/2007/ops"/>''')
 
 CHAPTER_XML = six.b(
-    '''<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"  epub:prefix="z3998: http://www.daisy.org/z3998/2012/vocab/structure/#"></html>''')
+    '''<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml" 
+    xmlns:epub="http://www.idpf.org/2007/ops"  epub:prefix="z3998: 
+    http://www.daisy.org/z3998/2012/vocab/structure/#"></html>''')
 
 COVER_XML = six.b('''<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html>
@@ -1131,42 +1133,15 @@ class EpubWriter(object):
 
         _create_section(nav, self.book.toc)
 
-        # LANDMARKS / GUIDE
-        # - http://www.idpf.org/epub/30/spec/epub30-contentdocs.html#sec-xhtml-nav-def-types-landmarks
-
         if len(self.book.guide) > 0 and self.options.get('epub3_landmark'):
-
             # Epub2 guide types do not map completely to epub3 landmark types.
-            guide_to_landscape_map = {
-                'notes': 'rearnotes',
-                'text': 'bodymatter'
-            }
 
             guide_nav = etree.SubElement(body, 'nav', {'{%s}type' % NAMESPACES['EPUB']: 'landmarks'})
 
             guide_content_title = etree.SubElement(guide_nav, 'h2')
             guide_content_title.text = self.options.get('landmark_title', 'Guide')
 
-            guild_ol = etree.SubElement(guide_nav, 'ol')
-
-            for elem in self.book.guide:
-                li_item = etree.SubElement(guild_ol, 'li')
-
-                if 'item' in elem:
-                    chap = elem.get('item', None)
-                    if chap:
-                        _href = chap.file_name
-                        _title = chap.title
-                else:
-                    _href = elem.get('href', '')
-                    _title = elem.get('title', '')
-
-                guide_type = elem.get('type', '')
-                a_item = etree.SubElement(li_item, 'a', {
-                    '{%s}type' % NAMESPACES['EPUB']: guide_to_landscape_map.get(guide_type, guide_type),
-                    'href': os.path.relpath(_href, nav_dir_name)
-                })
-                a_item.text = _title
+            # guild_ol = etree.SubElement(guide_nav, 'ol')
 
         # PAGE-LIST
         if self.options.get('epub3_pages'):
@@ -1211,21 +1186,9 @@ class EpubWriter(object):
         ncx = parse_string(self.book.get_template('ncx'))
         root = ncx.getroot()
 
-        head = etree.SubElement(root, 'head')
-
-        # get this id
-        uid = etree.SubElement(head, 'meta', {'content': self.book.uid, 'name': 'dtb:uid'})
-        uid = etree.SubElement(head, 'meta', {'content': '0', 'name': 'dtb:depth'})
-        uid = etree.SubElement(head, 'meta', {'content': '0', 'name': 'dtb:totalPageCount'})
-        uid = etree.SubElement(head, 'meta', {'content': '0', 'name': 'dtb:maxPageNumber'})
-
         doc_title = etree.SubElement(root, 'docTitle')
         title = etree.SubElement(doc_title, 'text')
         title.text = self.book.title
-
-        #        doc_author = etree.SubElement(root, 'docAuthor')
-        #        author = etree.SubElement(doc_author, 'text')
-        #        author.text = 'Name of the person'
 
         # For now just make a very simple navMap
         nav_map = etree.SubElement(root, 'navMap')
@@ -1527,16 +1490,15 @@ class EpubReader(object):
 
     def _load_spine(self):
         spine = self.container.find('{%s}%s' % (NAMESPACES['OPF'], 'spine'))
-
         self.book.spine = [(t.get('idref'), t.get('linear', 'yes')) for t in spine]
 
-        toc = spine.get('toc', '')
         self.book.set_direction(spine.get('page-progression-direction', None))
 
         # should read ncx or nav file
-        if toc:
+        if spine.get('toc', ''):
             try:
-                ncxFile = self.read_file(zip_path.join(self.opf_dir, self.book.get_item_with_id(toc).get_name()))
+                ncxFile = self.read_file(zip_path.join(self.opf_dir,
+                                                       self.book.get_item_with_id(spine.get('toc', '')).get_name()))
             except KeyError:
                 raise EpubException(-1, 'Can not find ncx file.')
 
