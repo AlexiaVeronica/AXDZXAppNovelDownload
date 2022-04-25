@@ -110,10 +110,9 @@ class Book:
             return download_length
 
         for index, chapter_url in enumerate(chapter_list):
-            thread = threading.Thread(
+            self.thread_list.append(threading.Thread(
                 target=self.thread_download_content, args=(chapter_url, chapter_url.split('/')[1], download_length,)
-            )
-            self.thread_list.append(thread)
+            ))
 
         for thread in self.thread_list:
             thread.start()
