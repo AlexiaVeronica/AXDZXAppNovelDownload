@@ -32,7 +32,7 @@ def shell_book(inputs):  # 通过小说ID下载单本小说
         else:
             print("获取书籍信息失败，请检查id或者重新尝试！")
     else:
-        print('未输入Bookid')
+        print('未输入Book id')
 
 
 def shell_search_book(inputs):

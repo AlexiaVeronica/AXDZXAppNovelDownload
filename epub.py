@@ -1,4 +1,4 @@
-from ebook.ebooklib import epub
+from epub_novel import epub
 from instance import *
 import API
 
