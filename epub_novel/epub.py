@@ -130,13 +130,11 @@ class EpubItem(object):
         self.content = content
         self.is_linear = True
         self.manifest = manifest
-
         self.book = None
 
     def get_id(self):
         """
         Returns unique identifier for this item.
-
         :Returns:
           Returns uid number as string.
         """
@@ -535,14 +533,6 @@ class EpubBook(object):
 
     def __init__(self):
         self.EPUB_VERSION = None
-
-        self.reset()
-
-        # we should have options here
-
-    def reset(self):
-        "Initialises all needed variables to default values"
-
         self.metadata = {}
         self.items = []
         self.spine = []
@@ -550,14 +540,11 @@ class EpubBook(object):
         self.pages = []
         self.toc = []
         self.bindings = []
-
         self.IDENTIFIER_ID = 'id'
         self.FOLDER_NAME = 'EPUB'
-
         self._id_html = 0
         self._id_image = 0
         self._id_static = 0
-
         self.title = ''
         self.language = 'en'
         self.direction = None
@@ -647,7 +634,7 @@ class EpubBook(object):
         self.add_metadata(None, 'meta', '', OrderedDict([('name', 'cover'), ('content', 'cover-img')]))
 
     def add_author(self, author, file_as=None, role=None, uid='creator'):
-        "Add author for this document"
+        """Add author for this document"""
 
         self.add_metadata('DC', 'creator', author, {'id': uid})
 
@@ -661,7 +648,7 @@ class EpubBook(object):
                                                    'scheme': 'marc:relators'})
 
     def add_metadata(self, namespace, name, value, others=None):
-        "Add metadata"
+        """Add metadata"""
 
         if namespace in NAMESPACES:
             namespace = NAMESPACES[namespace]
@@ -683,7 +670,7 @@ class EpubBook(object):
         return self.metadata[namespace].get(name, [])
 
     def set_unique_metadata(self, namespace, name, value, others=None):
-        "Add metadata if metadata with this identifier does not already exist, otherwise update existing metadata."
+        """Add metadata if metadata with this identifier does not already exist, otherwise update existing metadata."""
 
         if namespace in NAMESPACES:
             namespace = NAMESPACES[namespace]
