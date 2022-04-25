@@ -1,9 +1,13 @@
 from API import HttpUtil, UrlConstants, ahttp
 
 
-def get(api_url: str):
-    api_url = UrlConstants.WEB_SITE + api_url.replace(UrlConstants.WEB_SITE, '')
-    return HttpUtil.get(api_url).json()
+def get(api_url: str, params: dict = None, max_retry: int = 3, **kwargs):
+    for retry in range(max_retry):
+        try:
+            api_url = UrlConstants.WEB_SITE + api_url.replace(UrlConstants.WEB_SITE, '')
+            return HttpUtil.get(api_url=api_url, params=params, **kwargs).json()
+        except Exception as error:
+            print(error)
 
 
 class Book:
