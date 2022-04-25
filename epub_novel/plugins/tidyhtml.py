@@ -1,8 +1,6 @@
 import six
 import subprocess
 from ebooklib.plugins.base import BasePlugin
-from ebooklib.utils import parse_html_string
-
 
 # Recommend usage of
 # - https://github.com/w3c/tidy-html5
@@ -24,7 +22,7 @@ def tidy_cleanup(content, **extra):
                              stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE, close_fds=True)
     except OSError:
-        return (3, None)
+        return 3, None
 
     p.stdin.write(content)
 
@@ -35,7 +33,7 @@ def tidy_cleanup(content, **extra):
     # 2 - there were errors
     # 3 - exception
 
-    return (p.returncode, cont)
+    return p.returncode, cont
 
 
 class TidyPlugin(BasePlugin):
@@ -44,7 +42,9 @@ class TidyPlugin(BasePlugin):
                'tidy-mark': 'no'
                }
 
-    def __init__(self, extra={}):
+    def __init__(self, extra=None):
+        if extra is None:
+            extra = {}
         self.options = dict(self.OPTIONS)
         self.options.update(extra)
 

@@ -18,7 +18,8 @@ class BooktypeLinks(BasePlugin):
 
         try:
             tree = parse_html_string(chapter.content)
-        except:
+        except Exception as error:
+            print(error)
             return
 
         root = tree.getroottree()
@@ -50,7 +51,7 @@ class BooktypeLinks(BasePlugin):
                     if _u.fragment != '':
                         _link.set('href', urljoin(_link.get('href'), '#%s' % _u.fragment))
 
-                    if _link.get('name') != None:
+                    if _link.get('name') is not None:
                         _link.set('id', _link.get('name'))
                         etree.strip_attributes(_link, 'name')
 
@@ -70,7 +71,8 @@ class BooktypeFootnotes(BasePlugin):
 
         try:
             tree = parse_html_string(chapter.content)
-        except:
+        except Exception as error:
+            print(error)
             return
 
         root = tree.getroottree()
@@ -78,8 +80,10 @@ class BooktypeFootnotes(BasePlugin):
         if len(root.find('body')) != 0:
             body = tree.find('body')
 
-            # <span id="InsertNoteID_1_marker1" class="InsertNoteMarker"><sup><a href="#InsertNoteID_1">1</a></sup><span>
-            # <ol id="InsertNote_NoteList"><li id="InsertNoteID_1">prvi footnote <span id="InsertNoteID_1_LinkBacks"><sup><a href="#InsertNoteID_1_marker1">^</a></sup></span></li>
+            # <span id="InsertNoteID_1_marker1" class="InsertNoteMarker"><sup><a
+            # href="#InsertNoteID_1">1</a></sup><span> <ol id="InsertNote_NoteList"><li id="InsertNoteID_1">prvi
+            # footnote <span id="InsertNoteID_1_LinkBacks"><sup><a
+            # href="#InsertNoteID_1_marker1">^</a></sup></span></li>
 
             # <a epub:type="noteref" href="#n1">1</a></p>
             # <aside epub:type="footnote" id="n1"><p>These have been corrected in this EPUB3 edition.</p></aside>

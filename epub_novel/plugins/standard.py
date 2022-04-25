@@ -192,11 +192,7 @@ class SyntaxPlugin(BasePlugin):
                         # http://html5doctor.com/the-dl-element/
                         # should be like this really
                         # some of the elements can be missing
-                        # dl
-                        #   dt
-                        #   dd
-                        #   dt
-                        #   dd
+
                 elif _item.tag == 'td':
                     leave_only(_item, ATTRIBUTES_GLOBAL + ['colspan', 'rowspan', 'headers'])
                 elif _item.tag == 'textarea':
