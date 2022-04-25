@@ -17,16 +17,15 @@ class EpubFile:
         self.epub.add_author(author_name)
 
     def add_intro(self, author_name, up_time, up_chapter, intro, novel_tag):
-        intro_ = epub.EpubHtml(title='简介信息', file_name='0000-000000-intro.xhtml', lang='zh-CN')
-        intro_.content = '<html><head></head><body><h1>简介</h1>'
-        intro_.content += '<p>书籍书名:{}</p><p>书籍序号:{}</p>'.format(self.book_name, self.book_id)
-        intro_.content += '<p>书籍作者:{}</p><p>更新时间:{}</p>'.format(author_name, up_time)
-        intro_.content += '<p>最新章节:{}</p><p>系统标签:{}</p>'.format(up_chapter, novel_tag)
-        intro_.content += '<p>简介信息:</p>{}</body></html>'.format(intro)
-        self.epub.add_item(intro_)
-        self.EpubList.append(intro_)
-
-    def cover(self):
+        intro_config = epub.EpubHtml(title='简介信息', file_name='0000-000000-intro.xhtml', lang='zh-CN')
+        intro_html = """<html><head></head><body>\n<img src="./{}.png" alt="{}"/>\n<h1>简介</h1>
+                        \n<p>书籍书名:{}</p>\n<p>书籍序号:{}</p>\n<p>书籍作者:{}</p>\n<p>更新时间:{}</p>
+                        \n<p>最新章节:{}</p>\n<p>系统标签:{}</p>\n<p>简介信息:</p>\n{}</body></html> """
+        intro_config.content = intro_html.format(
+            self.book_name, "书籍封面", self.book_name, self.book_id, author_name, up_time, up_chapter, novel_tag, intro
+        )
+        self.epub.add_item(intro_config)
+        self.EpubList.append(intro_config)
         self.epub.set_cover(self.book_name + '.png', API.Cover.download_cover())
 
     def add_chapter(self, chapter_title: str, content: str, serial_number: str):
@@ -40,7 +39,6 @@ class EpubFile:
         self.EpubList.append(chapter_serial)
 
     def save(self):
-        self.cover()
         self.epub.toc = tuple(self.EpubList)
         self.epub.spine = ['nav']
         self.epub.spine.extend(self.EpubList)
