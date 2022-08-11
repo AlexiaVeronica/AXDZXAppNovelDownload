@@ -56,6 +56,20 @@ class Request:
     def code(self) -> int:
         return self.request_result.status_code
 
+    def retry(self, retry_max: int = 5, return_type: str = "json"):
+        for retry in range(retry_max):
+            if self.code == 200:
+                if return_type == "json":
+                    return self.json
+                elif return_type == "string":
+                    return self.string
+                elif return_type == "content":
+                    return self.content
+            else:
+                print("method:{}\t\tretry:{}\t\turl:{}".format(self.method, retry, self.request_url))
+            self.request()
+        return None
+
     def request(self):
         if self.method == "GET":
             self.request_result = requests.request(
