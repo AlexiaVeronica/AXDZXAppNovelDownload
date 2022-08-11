@@ -20,8 +20,7 @@ class Book:
 class Chapter:
     @staticmethod
     def download_chapter(chapter_id: str):
-        response = HttpUtil.get(UrlConstants.CHAPTER_API.format(chapter_id)).json['chapter']
-        return response['title'], response['body']
+        return HttpUtil.get(UrlConstants.CHAPTER_API.format(chapter_id)).json
 
 
 class Cover:

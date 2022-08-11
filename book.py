@@ -28,52 +28,70 @@ class Book:
         self.config_json = []
         self.chapter_id_list = []
         self.thread_list = list()
-        self.pool_sema = threading.BoundedSemaphore(Vars.cfg.data.get('max_threads'))
+        self.book_info = book_info
         self.book_name = book_info.get('title')
         self.book_id = book_info.get('_id')
         self.author_name = book_info.get('author')
-        self.book_intro = book_info.get('longIntro')
         self.book_state = book_info.get('zt')
         self.book_tag = book_info.get('cat')
         self.word_count = book_info.get('wordCount')
         self.book_updated = book_info.get('updated')
         self.last_chapter = book_info.get('lastChapter')
-        self.book_config = f"{Vars.cfg.data.get('config_book')}/{self.book_name}" + '.json'
+        self.pool_sema = threading.BoundedSemaphore(Vars.cfg.data.get('max_threads'))
 
-    def show_book_info(self) -> str:
-        show_info = '作者:{0:<{2}}状态:{1}\n'.format(self.author_name, self.book_state, isCN(self.author_name))
-        show_info += '标签:{0:<{2}}字数:{1}\n'.format(self.book_tag, self.word_count, isCN(self.book_tag))
-        show_info += '最新:{0:<{2}}更新:{1}\n'.format(self.last_chapter, self.book_updated, isCN(self.last_chapter))
-        print(show_info)
-        if not os.path.exists(self.book_config):
-            open(self.book_config, "a").write("[]")
-        self.config_json = json.loads(open(self.book_config, 'r', encoding='utf-8').read())
-        return '{}简介:\n{}'.format(show_info, output_chapter_content(self.book_intro, intro=True))
+    @property
+    def book_config(self):
+        return f"{Vars.cfg.data.get('config_book')}/{self.book_name}" + '.json'
+
+    @property
+    def output_text(self):
+        return os.path.join(Vars.cfg.data.get('save_book'), self.book_name, f'{self.book_name}.txt')
+
+    @property
+    def description(self) -> str:
+        description_info = "书名:{}\n".format(self.book_name)
+        description_info += "作者:{}\n".format(self.author_name)
+        description_info += "标签:{}\n".format(self.book_tag)
+        description_info += "状态:{}\n".format(self.book_state)
+        description_info += "字数:{}\n".format(self.word_count)
+        description_info += "最新:{}\n".format(self.last_chapter)
+        description_info += "更新:{}\n".format(self.book_updated)
+        return description_info
+
+    @property
+    def book_intro(self) -> str:
+        return '\n'.join([i for i in self.book_info.get('longIntro').splitlines() if i.strip() != ""])
 
     def start_downloading_novels(self):
-        save_dir = os.path.join(Vars.cfg.data.get('save_book'), self.book_name, f'{self.book_name}.txt')
+        mkdir("config")
+        if not os.path.exists(self.book_config):
+            open(self.book_config, "a").write("[]")
+        print(self.description)  # 打印书籍信息
         if self.last_chapter is not None:
-            write(save_dir, 'w', self.show_book_info())
+            self.config_json = json.loads(open(self.book_config, 'r', encoding='utf-8').read())
+            write(self.output_text, "w", '{}简介:\n{}'.format(self.description, self.book_intro))
+
         chapter_list = self.get_chapter_url()
         if len(chapter_list) == 0:
             print("没有需要下载的章节！")
         else:
             self.download_chapter_threading(len(chapter_list), chapter_list)
             print('\n下载完成！')
-        self.output_text_and_epub(save_dir)
+        self.output_text_and_epub()
         print(self.book_name, '本地档案合并完毕')
 
     def progress_count(self, length):
-        print('{}/{} 进度:{:^3.0f}%'.format(self.progress_bar, length, (self.progress_bar / length) * 100), end='\r')
         self.progress_bar += 1
+        print('{}/{} 进度:{:^3.0f}%'.format(self.progress_bar, length, (self.progress_bar / length) * 100), end='\r')
 
     def thread_download_content(self, chapter_url, chapter_index, download_length):
         self.pool_sema.acquire()
-        chapter_title, chapter_content = API.Chapter.download_chapter(chapter_url)
+        response = API.Chapter.download_chapter(chapter_url)
+        content_text = [re.sub(r'\s+|　', '', i) for i in response['chapter']['body'].split('\n') if i.strip() != '']
         content_config = {
             'index': chapter_index,
-            'title': chapter_title,
-            'content': output_chapter_content(chapter_content, chapter_title),
+            'title': response['chapter']['title'],
+            'content': '\n　　'.join(content_text),
         }
         self.config_json.append(content_config)
         if Vars.cfg.data.get('real_time_cache'):
@@ -82,13 +100,15 @@ class Book:
         self.progress_count(download_length)
         self.pool_sema.release()
 
-    def output_text_and_epub(self, save_dir):
+    def output_text_and_epub(self):
         self.config_json = sorted(self.config_json, key=lambda list1: int(list1["index"]))  # 按照数字顺序排序文本
         for config_info in self.config_json:  # 遍历文件名
             Vars.epub_info.add_chapter(config_info['title'], config_info['content'], config_info['index'])
-
-        write(save_dir, 'a', ''.join(["\n\n\n" + config_info['content'] for config_info in self.config_json]))
-        Vars.epub_info.save(), self.config_json.clear(), self.chapter_id_list.clear()
+        for config_info in self.config_json:
+            write(self.output_text, 'a', "\n\n\n{}\n　　{}".format(config_info['title'], config_info['content']))
+        Vars.epub_info.save()
+        self.config_json.clear()
+        self.chapter_id_list.clear()
 
     def get_chapter_url(self):
         response = API.Book.catalogue(self.book_id)

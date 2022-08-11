@@ -67,7 +67,7 @@ class Request:
                     return self.content
             else:
                 print("method:{}\t\tretry:{}\t\turl:{}".format(self.method, retry, self.request_url))
-            self.request()
+            self.request()  # 重试 request 操作
         return None
 
     def request(self):
