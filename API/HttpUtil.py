@@ -1,66 +1,70 @@
 import requests
+import tenacity
+from API import UrlConstants
 from instance import *
-import functools
-from fake_useragent import UserAgent
-
-session = requests.session()
 
 
-def MaxRetry(func, max_retry=5):
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        for retry in range(max_retry):
-            response = func(*args, **kwargs)
-            if not isinstance(response, bool):
-                return response
-            else:
-                print("尝试第:{}次".format(retry + 1))
-
-    return wrapper
-
-
-def headers():
-    return {
+@tenacity.retry(stop=tenacity.stop_after_attempt(5), wait=tenacity.wait_fixed(0.5))
+def get(api_url: str, method: str = "GET", params: dict = None, app: bool = True, data_text: bool = False) -> "Request":
+    headers = {
         "Keep-Alive": "300",
         "Connection": "Keep-Alive",
         "Cache-Control": "no-cache",
         "Accept-Encoding": "gzip",
-        'User-Agent': UserAgent(verify_ssl=False).random,
+        'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/",
     }
+    response = Request(url=api_url, method=method, data=params, data_text=data_text, headers=headers, app=app)
+    response.request()
+    return response
 
 
-def get(api_url: str, params=None, max_retry: int = 5, **kwargs):
-    for retry in range(max_retry):
-        try:
-            response = requests.get(api_url, headers=headers(), params=params, **kwargs)
-            if response.status_code == 200:
-                return response
-        except requests.exceptions.RequestException as error:
-            if retry >= 2:
-                print("\nGet url:{} Error:{}".format(api_url, error))
+class Request:
+    def __init__(self, url, data_text: bool, data: dict, method: str, headers: dict, app: bool):
+        self.url = url
+        self.app = app
+        self.method = method
+        self.headers = headers
+        self.data_text = data_text
+        self.data = data if data is not None else {}
+        self.request_result = None
 
+    @property
+    def params(self):
+        return json.dumps(self.data) if self.data_text else self.data
 
-@MaxRetry
-def post(api_url: str, data=None, **kwargs):
-    try:
-        response = requests.post(api_url, headers=headers(), params=data, **kwargs)
-        if response.status_code == 200:
-            return response
+    @property
+    def api_url(self) -> str:
+        return UrlConstants.WEB_SITE + self.url if self.app else self.url
+
+    @property
+    def request_url(self):
+        return self.request_result.url
+
+    @property
+    def json(self) -> dict:
+        return self.request_result.json()
+
+    @property
+    def string(self) -> str:
+        return self.request_result.text
+
+    @property
+    def content(self) -> bytes:
+        return self.request_result.content
+
+    @property
+    def code(self) -> int:
+        return self.request_result.status_code
+
+    def request(self):
+        if self.method == "GET":
+            self.request_result = requests.request(
+                method=self.method, url=self.api_url, params=self.params, headers=self.headers
+            )
+        elif self.method == "POST" or self.method == "PUT":
+            self.request_result = requests.request(
+                method=self.method, url=self.api_url, data=self.params, headers=self.headers
+            )
         else:
-            return False
-    except requests.exceptions.RequestException as error:
-        print("\nGet url:{} Error:{}".format(api_url, error))
-        return False
-
-
-@MaxRetry
-def put(api_url: str, data=None, **kwargs):
-    try:
-        response = requests.put(api_url, headers=headers(), params=data, **kwargs)
-        if response.status_code == 200:
-            return response
-        else:
-            return False
-    except requests.exceptions.RequestException as error:
-        print("\nGet url:{} Error:{}".format(api_url, error))
-        return False
+            raise Exception("method 【{}】 is not in ['GET', 'POST', 'PUT', 'DELETE']".format(self.method))
+        return self.request_result

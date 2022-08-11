@@ -32,7 +32,7 @@ def download_tag(tag_id):
         for index, tag_info_data in enumerate(response, start=1):
             print("\n\n{}分类 第{}本\n".format(tag_name, index))
             Vars.book_info = API.Book.novel_info(tag_info_data['_id'])
-            if Vars.book_info is not None and isinstance(Vars.book_info, dict):
+            if Vars.book_info.get("_id") is not None:
                 Vars.book_info = book.Book(Vars.book_info)
                 print('开始下载{}'.format(Vars.book_info.book_name))
                 start_downloading_novels()
