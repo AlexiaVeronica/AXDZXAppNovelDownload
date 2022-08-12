@@ -41,24 +41,18 @@ class Book:
         self.pool_sema = threading.BoundedSemaphore(Vars.cfg.data.get('max_threads'))
 
     @property
-    def book_config(self):
-        mkdir(Vars.cfg.data.get('config_book'))
-        return f"{Vars.cfg.data.get('config_book')}/{self.book_name}" + '.json'
+    def book_config(self) -> str:
+        return os.path.join(mkdir(Vars.cfg.data.get('config_book')), self.book_name + '.json')
 
     @property
-    def output_text(self):
-        mkdir(os.path.join(Vars.cfg.data.get('save_book'), self.book_name))
-        return os.path.join(Vars.cfg.data.get('save_book'), self.book_name, f'{self.book_name}.txt')
+    def output_text(self) -> str:
+        return os.path.join(mkdir(os.path.join(Vars.cfg.data['save_book'], self.book_name)), f'{self.book_name}.txt')
 
     @property
     def description(self) -> str:
-        description_info = "书名:{}\n".format(self.book_name)
-        description_info += "作者:{}\n".format(self.author_name)
-        description_info += "标签:{}\n".format(self.book_tag)
-        description_info += "状态:{}\n".format(self.book_state)
-        description_info += "字数:{}\n".format(self.word_count)
-        description_info += "最新:{}\n".format(self.last_chapter)
-        description_info += "更新:{}\n".format(self.book_updated)
+        description_info = "书名:{}\n作者:{}\n".format(self.book_name, self.author_name)
+        description_info += "标签:{}\n状态:{}\n".format(self.book_tag, self.book_state)
+        description_info += "字数:{}\n最新:{}\n更新:{}\n".format(self.word_count, self.last_chapter, self.book_updated)
         return description_info
 
     @property
