@@ -103,25 +103,31 @@ class Book:
     def output_text_and_epub(self):
         self.config_json = sorted(self.config_json, key=lambda list1: int(list1["index"]))  # 按照数字顺序排序文本
         for config_info in self.config_json:  # 遍历文件名
-            Vars.epub_info.add_chapter(config_info['title'], config_info['content'], config_info['index'])
+            if config_info['content'] != "":  # 如果内容不为空
+                Vars.epub_info.add_chapter(config_info['title'], config_info['content'], config_info['index'])
+            else:
+                print("{}章节内容为空！".format(config_info['title']))
+
         for config_info in self.config_json:
-            write(self.output_text, 'a', "\n\n\n{}\n　　{}".format(config_info['title'], config_info['content']))
+            write(self.output_text, 'a', "\n\n\n{}\n\n　　{}".format(config_info['title'], config_info['content']))
         Vars.epub_info.save()
         self.config_json.clear()
         self.chapter_id_list.clear()
 
     def get_chapter_url(self):
-        response = API.Book.catalogue(self.book_id)
-        if response is None:
-            return self.chapter_id_list
-        config_tests = [chapters.get('title') for chapters in self.config_json]
-        if len(self.config_json) == 0:
-            link_list = [chapters.get('link') for chapters in response]
-            return link_list
-        for index, info in enumerate(response):
-            if info['title'] in config_tests and info.get('content') != "":
-                continue
-            self.chapter_id_list.append(info['link'])
+        response = API.Book.catalogue_info(self.book_id)
+        if isinstance(response, list):
+            if len(self.config_json) == 0:
+                return [chapters.get('link') for chapters in response]
+            for chapter_info in response:
+                if chapter_info['title'] not in [i.get('title') for i in self.config_json]:
+                    self.chapter_id_list.append(chapter_info['link'])
+            else:
+                print("{}".format(self.book_name), "本地缓存检测完毕！")
+                if len(self.chapter_id_list) == 0:
+                    print("全部章节已经是最新，没有需要下载的章节！")
+                else:
+                    print("一共{}章须下载！".format(len(self.chapter_id_list)))
 
         return self.chapter_id_list
 
@@ -141,4 +147,4 @@ class Book:
             thread.join()
         self.thread_list.clear()
         with open(self.book_config, 'w', encoding='utf-8') as f:
-            json.dump(self.config_json, f, ensure_ascii=False)
+            json.dump(self.config_json, f, ensure_ascii=False, indent=4)

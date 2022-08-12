@@ -8,9 +8,8 @@ class Book:
         return HttpUtil.get(UrlConstants.BOOK_INFO_API.format(novel_id)).json
 
     @staticmethod
-    def catalogue(novel_id: int):
-        response = HttpUtil.get(UrlConstants.BOOK_CATALOGUE.format(novel_id))
-        return response.retry().get('mixToc').get('chapters')
+    def catalogue_info(novel_id: int):
+        return HttpUtil.get(UrlConstants.BOOK_CATALOGUE.format(novel_id)).retry().get('mixToc').get('chapters')
 
     @staticmethod
     def search_book(novel_name: str):
