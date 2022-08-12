@@ -1,10 +1,10 @@
 class BasePlugin(object):
     def before_write(self, book):
-        "Processing before save"
+        """Processing before save"""
         return True
 
     def after_write(self, book):
-        "Processing after save"
+        """Processing after save"""
         return True
 
     def before_read(self, book):

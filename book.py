@@ -87,7 +87,7 @@ class Book:
     def progress_count(self):
         self.progress_bar += 1
         percentage = ((self.progress_bar / self.download_length) * 100)
-        return '{}/{} percentage:{:^3.0f}%'.format(self.progress_bar, self.download_length, percentage)
+        return '{}/{} percentage: {:^3.0f}%'.format(self.progress_bar, self.download_length, percentage)
 
     def thread_download_content(self, chapter_url, chapter_index):
         self.pool_sema.acquire()

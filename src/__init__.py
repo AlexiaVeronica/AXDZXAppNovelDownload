@@ -1,4 +1,4 @@
-from src import HttpUtil, UrlConstants
+from src import HttpUtil, UrlConstants, epub
 
 
 class Book:
