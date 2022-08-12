@@ -38,12 +38,11 @@ def shell_book(inputs: list):  # 通过小说ID下载单本小说
         print("开始下载《{}》\n{}".format(Vars.book_info.book_name, Vars.book_info.description))
 
         write(
-            Vars.book_info.output_text, "w",
-            '{}简介:\n{}'.format(Vars.book_info.description, Vars.book_info.book_intro)
+            Vars.book_info.output_text, "w", '{}简介:\n{}'.format(Vars.book_info.description, Vars.book_info.book_intro)
         )
         Vars.book_info.start_downloading_novels()
     else:
-        print("获取书籍信息失败，请检查id或者重新尝试！")
+        print("get book info error, the book id is not exist!")
 
 
 def shell_search_book(inputs):
