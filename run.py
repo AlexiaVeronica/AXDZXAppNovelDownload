@@ -38,7 +38,7 @@ def shell_book(inputs):  # 通过小说ID下载单本小说
 def shell_search_book(inputs):
     if len(inputs) >= 2:
         start = time.time()
-        response = src.Book.search_book(inputs[1])
+        response = src.Book.search_book(inputs[1]).get('books')
         for index, books in enumerate(response):
             shell_book([index, books.get('_id')])
         print(f'下载耗时:{round(time.time() - start, 2)} 秒')
@@ -68,14 +68,15 @@ def shell_tag(inputs):
         page = 0
         while True:
             tag_name = Msgs.msg_tag[tag_id]
-            response = src.Tag.tag_info(inputs[1], tag_name, page)
-            if response is None: break
+            response = src.Tag.tag_info(inputs[1], tag_name, page).get("books")
+            if response is None:
+                break
             for index, tag_info_data in enumerate(response, start=1):
                 print("\n\n{}分类 第{}本\n".format(tag_name, index))
                 shell_book([index, tag_info_data.get('_id')])
             page += 20
     else:
-        print(src.Tag.get_type())
+        print(src.Tag.get_tag_type_information())
 
 
 def shell_ranking(inputs):

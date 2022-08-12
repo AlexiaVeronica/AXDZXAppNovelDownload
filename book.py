@@ -91,7 +91,7 @@ class Book:
 
     def thread_download_content(self, chapter_url, chapter_index):
         self.pool_sema.acquire()
-        response = src.Chapter.download_chapter(chapter_url)
+        response = src.Book.download_chapter(chapter_url)
         content_text = [re.sub(r'\s+|　', '', i) for i in response['chapter']['body'].split('\n') if i.strip() != '']
         content_config = {
             'index': chapter_index,

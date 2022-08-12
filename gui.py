@@ -27,7 +27,7 @@ def download_tag(tag_id):
     page = 0
     while True:
         tag_name = Msgs.msg_tag[tag_id]
-        response = src.Tag.tag_info(tag_id, tag_name, page)
+        response = src.Tag.tag_info(tag_id, tag_name, page).get("books")
         if response is None: break
         for index, tag_info_data in enumerate(response, start=1):
             print("\n\n{}分类 第{}本\n".format(tag_name, index))

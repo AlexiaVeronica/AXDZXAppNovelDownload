@@ -65,6 +65,8 @@ class Request:
                     return self.string
                 elif return_type == "content":
                     return self.content
+                else:
+                    return self.request_result
             else:
                 print("method:{}\t\tretry:{}\t\turl:{}".format(self.method, retry, self.request_url))
             self.request()  # 重试 request 操作
