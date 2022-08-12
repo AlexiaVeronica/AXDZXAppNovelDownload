@@ -7,7 +7,7 @@ class Vars:
     cfg = Config('Config.json', os.getcwd())
     book_info = None
     epub_info = None
-
+    current_catalogue = None
 
 class Msgs:
     msg_help = [

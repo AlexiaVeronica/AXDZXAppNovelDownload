@@ -26,7 +26,7 @@ class Book:
         self.download_length = 0
         self.index = index
         self.progress_bar = 1
-        self.config_json = []
+        self._config_json = list()
         self.chapter_id_list = []
         self.thread_list = list()
         self.book_info = book_info
@@ -39,6 +39,23 @@ class Book:
         self.book_updated = book_info.get('updated')
         self.last_chapter = book_info.get('lastChapter')
         self.pool_sema = threading.BoundedSemaphore(Vars.cfg.data.get('max_threads'))
+
+    @property
+    def config_json(self):
+        return self._config_json
+
+    @config_json.setter
+    def config_json(self, value):
+        if isinstance(value, dict):
+            self._config_json.append(value)
+        elif isinstance(value, list):
+            self._config_json = value
+        else:
+            raise TypeError("config json must be dict or list, but {}".format(type(value)))
+
+    @config_json.deleter
+    def config_json(self):
+        self._config_json.clear()
 
     @property
     def book_config(self) -> str:
@@ -67,12 +84,12 @@ class Book:
             self.config_json = json.loads(open(self.book_config, 'r', encoding='utf-8').read())
             write(self.output_text, "w", '{}简介:\n{}'.format(self.description, self.book_intro))
 
-        chapter_list = self.get_chapter_url()
-        self.download_length = len(chapter_list)
+        self.get_chapter_url()
+        self.download_length = len(Vars.current_catalogue.chapter_id_list)
         if self.download_length == 0:
             print("no need to download this book")
         else:
-            self.download_chapter_threading(chapter_list)
+            self.download_chapter_threading()
             print('book download complete!')
         self.output_text_and_epub()
         print(self.book_name, '本地档案合并完毕')
@@ -110,28 +127,27 @@ class Book:
         for config_info in self.config_json:
             write(self.output_text, 'a', "\n\n\n{}\n\n　　{}".format(config_info['title'], config_info['content']))
         Vars.epub_info.save()
-        self.config_json.clear()
+        del self.config_json
         self.chapter_id_list.clear()
 
     def get_chapter_url(self):
-        response = src.Book.catalogue_info(self.book_id).get('mixToc').get('chapters')
-        if isinstance(response, list) and len(response) > 0:
+        Vars.current_catalogue = Catalogue(src.Book.catalogue_info(self.book_id).get('mixToc'))
+        if Vars.current_catalogue.chapter_count > 0:
             if len(self.config_json) == 0:
-                return [chapters.get('link') for chapters in response]
-            for chapter_info in response:
-                if chapter_info['title'] not in [i.get('title') for i in self.config_json]:
-                    self.chapter_id_list.append(chapter_info['link'])
+                Vars.current_catalogue.chapter_id_list = Vars.current_catalogue.chapters_url_list
             else:
-                print("{}".format(self.book_name), "本地缓存检测完毕！")
-                if len(self.chapter_id_list) == 0:
-                    print("全部章节已经是最新，没有需要下载的章节！")
+                for chapter_info in Vars.current_catalogue.chapters_info_list:
+                    if not Catalogue.test_local_chapter(chapter_info.get('title'), self.config_json):
+                        Vars.current_catalogue.chapter_id_list = chapter_info['link']
                 else:
-                    print("一共{}章须下载！".format(len(self.chapter_id_list)))
+                    print("{}".format(self.book_name), "本地缓存检测完毕！")
+                    if len(Vars.current_catalogue.chapter_id_list) == 0:
+                        print("全部章节已经是最新，没有需要下载的章节！")
+                    else:
+                        print("一共{}章须下载！".format(len(Vars.current_catalogue.chapter_id_list)))
 
-        return self.chapter_id_list
-
-    def download_chapter_threading(self, chapter_list):
-        for index, chapter_url in enumerate(chapter_list):
+    def download_chapter_threading(self):
+        for index, chapter_url in enumerate(Vars.current_catalogue.chapter_id_list):
             self.thread_list.append(threading.Thread(
                 target=self.thread_download_content, args=(chapter_url, chapter_url.split('/')[1],)
             ))
@@ -142,5 +158,38 @@ class Book:
         for thread in self.thread_list:
             thread.join()
         self.thread_list.clear()
+        Vars.current_catalogue.chapter_id_list.clear()
         with open(self.book_config, 'w', encoding='utf-8') as f:
             json.dump(self.config_json, f, ensure_ascii=False, indent=4)
+
+
+class Catalogue:
+    def __init__(self, catalogue_info: dict):
+        self._chapter_id_list = []
+        self.catalogue_info = catalogue_info
+        self.chapter_count = int(catalogue_info.get('chaptercount'))
+        self.chapters_info_list = catalogue_info.get('chapters')
+        self.chapters_updated = self.catalogue_info.get('chaptersUpdated')
+
+    @property
+    def chapters_url_list(self) -> list:
+        return [chapters.get('link') for chapters in self.chapters_info_list]
+
+    @property
+    def chapters_title_list(self) -> list:
+        return [chapters.get('title') for chapters in self.chapters_info_list]
+
+    @staticmethod
+    def test_local_chapter(chapter_title: str, local_chapter_list: list) -> bool:
+        return any(chapter_title == local_info['title'] for local_info in local_chapter_list)
+
+    @property
+    def chapter_id_list(self):
+        return self._chapter_id_list
+
+    @chapter_id_list.setter
+    def chapter_id_list(self, chapter_id: [str, list]):
+        if isinstance(chapter_id, str):
+            self._chapter_id_list.append(chapter_id)
+        elif isinstance(chapter_id, list):
+            self._chapter_id_list = chapter_id
