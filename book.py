@@ -35,7 +35,7 @@ class Book:
 
     @config_json.deleter
     def config_json(self):
-        self._config_json.clear()
+        self._config_json =[]
 
     @property
     def book_config(self) -> str:
@@ -57,14 +57,20 @@ class Book:
         return '\n'.join([i for i in self.book_info.get('longIntro').splitlines() if i.strip() != ""])
 
     def start_downloading_novels(self):
-        if not os.path.exists(self.book_config):
-            open(self.book_config, "a").write("[]")
-        print(self.description)  # 打印书籍信息
-        if self.last_chapter is not None:
-            self.config_json = json.loads(open(self.book_config, 'r', encoding='utf-8').read())
-            write(self.output_text, "w", '{}简介:\n{}'.format(self.description, self.book_intro))
+        Vars.current_catalogue = Catalogue(src.Book.catalogue_info(self.book_id).get('mixToc'))
+        if len(self.config_json) > 0:
+            for chapter_info in Vars.current_catalogue.chapters_info_list:
+                if not Catalogue.test_local_chapter(chapter_info['title'], self.config_json):
+                    Vars.current_catalogue.chapter_id_list = chapter_info['link']
+        else:
+            Vars.current_catalogue.chapter_id_list = Vars.current_catalogue.chapters_url_list
 
-        self.get_chapter_url()
+        print("{}".format(self.book_name), "本地缓存检测完毕！")
+        if len(Vars.current_catalogue.chapter_id_list) == 0:
+            print("全部章节已经是最新，没有需要下载的章节！")
+        else:
+            print("一共{}章须下载！".format(len(Vars.current_catalogue.chapter_id_list)))
+
         self.download_length = len(Vars.current_catalogue.chapter_id_list)
         if self.download_length == 0:
             print("no need to download this book")
@@ -108,22 +114,6 @@ class Book:
             write(self.output_text, 'a', "\n\n\n{}\n\n　　{}".format(config_info['title'], config_info['content']))
         Vars.epub_info.save()
         del self.config_json
-
-    def get_chapter_url(self):
-        Vars.current_catalogue = Catalogue(src.Book.catalogue_info(self.book_id).get('mixToc'))
-        if Vars.current_catalogue.chapter_count > 0:
-            if len(self.config_json) == 0:
-                Vars.current_catalogue.chapter_id_list = Vars.current_catalogue.chapters_url_list
-            else:
-                for chapter_info in Vars.current_catalogue.chapters_info_list:
-                    if not Catalogue.test_local_chapter(chapter_info.get('title'), self.config_json):
-                        Vars.current_catalogue.chapter_id_list = chapter_info['link']
-                else:
-                    print("{}".format(self.book_name), "本地缓存检测完毕！")
-                    if len(Vars.current_catalogue.chapter_id_list) == 0:
-                        print("全部章节已经是最新，没有需要下载的章节！")
-                    else:
-                        print("一共{}章须下载！".format(len(Vars.current_catalogue.chapter_id_list)))
 
     def download_chapter_threading(self):
         mult_thread_list = []

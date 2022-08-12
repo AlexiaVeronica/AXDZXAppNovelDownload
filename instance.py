@@ -9,6 +9,7 @@ class Vars:
     epub_info = None
     current_catalogue = None
 
+
 class Msgs:
     msg_help = [
         "输入指令, 输入首字母即可 | 爱下电子书网址:https://m.aixdzs.com/",
@@ -30,24 +31,11 @@ class Msgs:
 def mkdir(file_path: [str, list]):
     if isinstance(file_path, list):
         for path in file_path:
-            makedirs(path)
+            mkdir(path)
     else:
         if not os.path.exists(file_path):
             os.makedirs(file_path)
         return file_path
-
-
-def makedirs(file_path: str):
-    if not os.path.exists(os.path.join(file_path)):
-        os.makedirs(os.path.join(file_path))
-
-
-def isCN(book_name):
-    cn_no = 0
-    for ch in book_name:
-        if '\u4e00' <= ch <= '\u9fff':
-            cn_no += 1
-    return 40 - cn_no
 
 
 def inputs_(prompt, default=None):
@@ -57,11 +45,6 @@ def inputs_(prompt, default=None):
             return ret
         elif default is not None:
             return default
-
-
-def content_(content: str):
-    return ''.join([re.sub(r'^\s*', "\n　　", content)
-                    for content in content.split("\n") if re.search(r'\S', content) is not None])
 
 
 def write(path: str, mode: str, info=None):

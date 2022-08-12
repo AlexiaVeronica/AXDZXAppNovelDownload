@@ -15,24 +15,35 @@ def agreed_read_readme():
             sys.exit()
 
 
-def shell_book(inputs):  # 通过小说ID下载单本小说
+def shell_book(inputs: list):  # 通过小说ID下载单本小说
     if len(inputs) >= 2:
         Vars.book_info = src.Book.novel_info(inputs[1])
-        if Vars.book_info.get("_id") is not None:
-            Vars.book_info = book.Book(Vars.book_info)
-            Vars.epub_info = epub.EpubFile(
-                Vars.book_info.book_id, Vars.book_info.book_name, Vars.book_info.author_name)
-            Vars.epub_info.add_intro(
-                Vars.book_info.author_name, Vars.book_info.book_updated, Vars.book_info.last_chapter,
-                Vars.book_info.book_intro, Vars.book_info.book_tag
-            )
-            print("开始下载《{}》".format(Vars.book_info.book_name))
-            makedirs(Vars.cfg.data.get('save_book') + "/" + Vars.book_info.book_name)
-            Vars.book_info.start_downloading_novels()
-        else:
-            print("获取书籍信息失败，请检查id或者重新尝试！")
     else:
-        print('未输入Book id')
+        raise Exception("you need input book id, please check your input")
+
+    if Vars.book_info.get("_id") is not None:
+        Vars.book_info = book.Book(Vars.book_info)
+        Vars.epub_info = epub.EpubFile(
+            Vars.book_info.book_id, Vars.book_info.book_name, Vars.book_info.author_name)
+        Vars.epub_info.add_intro(
+            Vars.book_info.author_name, Vars.book_info.book_updated, Vars.book_info.last_chapter,
+            Vars.book_info.book_intro, Vars.book_info.book_tag
+        )
+        mkdir(Vars.cfg.data.get('save_book') + "/" + Vars.book_info.book_name)
+        if os.path.exists(Vars.book_info.book_config):
+            Vars.book_info.config_json = json.loads(open(Vars.book_info.book_config, 'r', encoding='utf-8').read())
+        else:
+            Vars.book_info.config_json = []
+
+        print("开始下载《{}》\n{}".format(Vars.book_info.book_name, Vars.book_info.description))
+
+        write(
+            Vars.book_info.output_text, "w",
+            '{}简介:\n{}'.format(Vars.book_info.description, Vars.book_info.book_intro)
+        )
+        Vars.book_info.start_downloading_novels()
+    else:
+        print("获取书籍信息失败，请检查id或者重新尝试！")
 
 
 def shell_search_book(inputs):
