@@ -1,4 +1,4 @@
-from API import HttpUtil, UrlConstants
+from src import HttpUtil, UrlConstants
 
 
 class Book:
@@ -8,8 +8,8 @@ class Book:
         return HttpUtil.get(UrlConstants.BOOK_INFO_API.format(novel_id)).json
 
     @staticmethod
-    def catalogue_info(novel_id: int):
-        return HttpUtil.get(UrlConstants.BOOK_CATALOGUE.format(novel_id)).retry().get('mixToc').get('chapters')
+    def catalogue_info(novel_id: int) -> dict:
+        return HttpUtil.get(UrlConstants.BOOK_CATALOGUE.format(novel_id)).retry()
 
     @staticmethod
     def search_book(novel_name: str):

@@ -1,6 +1,6 @@
 import threading
 import PySimpleGUI as sg
-import API
+import src
 import book
 import epub
 from instance import *
@@ -27,11 +27,11 @@ def download_tag(tag_id):
     page = 0
     while True:
         tag_name = Msgs.msg_tag[tag_id]
-        response = API.Tag.tag_info(tag_id, tag_name, page)
+        response = src.Tag.tag_info(tag_id, tag_name, page)
         if response is None: break
         for index, tag_info_data in enumerate(response, start=1):
             print("\n\n{}分类 第{}本\n".format(tag_name, index))
-            Vars.book_info = API.Book.novel_info(tag_info_data['_id'])
+            Vars.book_info = src.Book.novel_info(tag_info_data['_id'])
             if Vars.book_info.get("_id") is not None:
                 Vars.book_info = book.Book(Vars.book_info)
                 print('开始下载{}'.format(Vars.book_info.book_name))
@@ -67,7 +67,7 @@ def main():
         elif event == "_DOWNLOAD_":
             print(values['-BID-'])
             if values['-BID-'] != "":
-                Vars.book_info = API.Book.novel_info(values['-BID-'])
+                Vars.book_info = src.Book.novel_info(values['-BID-'])
                 if Vars.book_info is not None and isinstance(Vars.book_info, dict):
                     Vars.book_info = book.Book(Vars.book_info)
                     sg.popup_cancel('开始下载{}'.format(Vars.book_info.book_name))

@@ -1,5 +1,5 @@
 import threading
-import API
+import src
 from instance import *
 
 
@@ -91,7 +91,7 @@ class Book:
 
     def thread_download_content(self, chapter_url, chapter_index):
         self.pool_sema.acquire()
-        response = API.Chapter.download_chapter(chapter_url)
+        response = src.Chapter.download_chapter(chapter_url)
         content_text = [re.sub(r'\s+|　', '', i) for i in response['chapter']['body'].split('\n') if i.strip() != '']
         content_config = {
             'index': chapter_index,
@@ -120,8 +120,8 @@ class Book:
         self.chapter_id_list.clear()
 
     def get_chapter_url(self):
-        response = API.Book.catalogue_info(self.book_id)
-        if isinstance(response, list):
+        response = src.Book.catalogue_info(self.book_id).get('mixToc').get('chapters')
+        if isinstance(response, list) and len(response) > 0:
             if len(self.config_json) == 0:
                 return [chapters.get('link') for chapters in response]
             for chapter_info in response:

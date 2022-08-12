@@ -1,6 +1,6 @@
 from epub_novel import epub
 from instance import *
-import API
+import src
 
 
 class EpubFile:
@@ -26,7 +26,7 @@ class EpubFile:
         )
         self.epub.add_item(intro_config)
         self.EpubList.append(intro_config)
-        self.epub.set_cover(self.book_name + '.png', API.Cover.download_cover())
+        self.epub.set_cover(self.book_name + '.png', src.Cover.download_cover())
 
     def add_chapter(self, chapter_title: str, content: str, serial_number: str):
         chapter_serial = epub.EpubHtml(

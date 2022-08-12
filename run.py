@@ -1,4 +1,4 @@
-import API
+import src
 import book
 import epub
 from instance import *
@@ -17,7 +17,7 @@ def agreed_read_readme():
 
 def shell_book(inputs):  # 通过小说ID下载单本小说
     if len(inputs) >= 2:
-        Vars.book_info = API.Book.novel_info(inputs[1])
+        Vars.book_info = src.Book.novel_info(inputs[1])
         if Vars.book_info.get("_id") is not None:
             Vars.book_info = book.Book(Vars.book_info)
             Vars.epub_info = epub.EpubFile(
@@ -38,7 +38,7 @@ def shell_book(inputs):  # 通过小说ID下载单本小说
 def shell_search_book(inputs):
     if len(inputs) >= 2:
         start = time.time()
-        response = API.Book.search_book(inputs[1])
+        response = src.Book.search_book(inputs[1])
         for index, books in enumerate(response):
             shell_book([index, books.get('_id')])
         print(f'下载耗时:{round(time.time() - start, 2)} 秒')
@@ -68,20 +68,20 @@ def shell_tag(inputs):
         page = 0
         while True:
             tag_name = Msgs.msg_tag[tag_id]
-            response = API.Tag.tag_info(inputs[1], tag_name, page)
+            response = src.Tag.tag_info(inputs[1], tag_name, page)
             if response is None: break
             for index, tag_info_data in enumerate(response, start=1):
                 print("\n\n{}分类 第{}本\n".format(tag_name, index))
                 shell_book([index, tag_info_data.get('_id')])
             page += 20
     else:
-        print(API.Tag.get_type())
+        print(src.Tag.get_type())
 
 
 def shell_ranking(inputs):
     if len(inputs) >= 2:
         novel_list = []
-        for data in API.Tag.ranking(inputs[1])['ranking']['books']:
+        for data in src.Tag.ranking(inputs[1])['ranking']['books']:
             for key, Value in data.items():
                 if key == 'title':
                     print('\n\n{}:\t\t\t{}'.format(key, Value))
