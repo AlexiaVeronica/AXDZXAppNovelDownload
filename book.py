@@ -1,34 +1,14 @@
-import threading
 import src
+import threading
 from instance import *
-
-
-def output_chapter_content(chapter_content, chapter_title="", intro=False):
-    content = ""
-    if intro is True:
-        for line in chapter_content.splitlines():
-            chapter_line = line.strip("　").strip()
-            if chapter_line != "":
-                content += "\n" + chapter_line[:60]
-        return content
-    for line in chapter_content.splitlines():
-        chapter_line = line.strip("　").strip()
-        if chapter_line != "" and len(chapter_line) > 2:
-            if "http" in chapter_line:
-                continue
-            content += "\n　　{}".format(chapter_line)
-    return f"{chapter_title}\n\n{content}"
 
 
 class Book:
 
-    def __init__(self, book_info: dict, index=None):
+    def __init__(self, book_info: dict):
         self.download_length = 0
-        self.index = index
         self.progress_bar = 1
         self._config_json = list()
-        self.chapter_id_list = []
-        self.thread_list = list()
         self.book_info = book_info
         self.book_name = book_info.get('title')
         self.book_id = book_info.get('_id')
@@ -38,7 +18,7 @@ class Book:
         self.word_count = book_info.get('wordCount')
         self.book_updated = book_info.get('updated')
         self.last_chapter = book_info.get('lastChapter')
-        self.pool_sema = threading.BoundedSemaphore(Vars.cfg.data.get('max_threads'))
+        self.pool_sema = threading.BoundedSemaphore(Vars.cfg.data['max_threads'])
 
     @property
     def config_json(self):
@@ -100,7 +80,7 @@ class Book:
         percentage = ((self.progress_bar / self.download_length) * 100)
         return '{}/{} percentage: {:^3.0f}%'.format(self.progress_bar, self.download_length, percentage)
 
-    def thread_download_content(self, chapter_url, chapter_index):
+    def set_content(self, chapter_url, chapter_index):
         self.pool_sema.acquire()
         response = src.Book.download_chapter(chapter_url)
         content_text = [re.sub(r'\s+|　', '', i) for i in response['chapter']['body'].split('\n') if i.strip() != '']
@@ -128,7 +108,6 @@ class Book:
             write(self.output_text, 'a', "\n\n\n{}\n\n　　{}".format(config_info['title'], config_info['content']))
         Vars.epub_info.save()
         del self.config_json
-        self.chapter_id_list.clear()
 
     def get_chapter_url(self):
         Vars.current_catalogue = Catalogue(src.Book.catalogue_info(self.book_id).get('mixToc'))
@@ -147,17 +126,19 @@ class Book:
                         print("一共{}章须下载！".format(len(Vars.current_catalogue.chapter_id_list)))
 
     def download_chapter_threading(self):
-        for index, chapter_url in enumerate(Vars.current_catalogue.chapter_id_list):
-            self.thread_list.append(threading.Thread(
-                target=self.thread_download_content, args=(chapter_url, chapter_url.split('/')[1],)
-            ))
+        mult_thread_list = []
+        for chapter_url in Vars.current_catalogue.chapter_id_list:
+            mult_thread_list.append(
+                threading.Thread(target=self.set_content, args=(chapter_url, chapter_url.split('/')[1],))
+            )  # establish a thread for each chapter to download
 
-        for thread in self.thread_list:
+        for thread in mult_thread_list:  # start threads one by one
             thread.start()
 
-        for thread in self.thread_list:
+        for thread in mult_thread_list:  # wait for all threads to finish
             thread.join()
-        self.thread_list.clear()
+
+        mult_thread_list.clear()
         Vars.current_catalogue.chapter_id_list.clear()
         with open(self.book_config, 'w', encoding='utf-8') as f:
             json.dump(self.config_json, f, ensure_ascii=False, indent=4)
