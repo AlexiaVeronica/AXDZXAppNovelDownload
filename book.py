@@ -23,6 +23,7 @@ def output_chapter_content(chapter_content, chapter_title="", intro=False):
 class Book:
 
     def __init__(self, book_info: dict, index=None):
+        self.download_length = 0
         self.index = index
         self.progress_bar = 1
         self.config_json = []
@@ -41,10 +42,12 @@ class Book:
 
     @property
     def book_config(self):
+        mkdir(Vars.cfg.data.get('config_book'))
         return f"{Vars.cfg.data.get('config_book')}/{self.book_name}" + '.json'
 
     @property
     def output_text(self):
+        mkdir(os.path.join(Vars.cfg.data.get('save_book'), self.book_name))
         return os.path.join(Vars.cfg.data.get('save_book'), self.book_name, f'{self.book_name}.txt')
 
     @property
@@ -63,7 +66,6 @@ class Book:
         return '\n'.join([i for i in self.book_info.get('longIntro').splitlines() if i.strip() != ""])
 
     def start_downloading_novels(self):
-        mkdir("config")
         if not os.path.exists(self.book_config):
             open(self.book_config, "a").write("[]")
         print(self.description)  # 打印书籍信息
@@ -72,19 +74,22 @@ class Book:
             write(self.output_text, "w", '{}简介:\n{}'.format(self.description, self.book_intro))
 
         chapter_list = self.get_chapter_url()
-        if len(chapter_list) == 0:
-            print("没有需要下载的章节！")
+        self.download_length = len(chapter_list)
+        if self.download_length == 0:
+            print("no need to download this book")
         else:
-            self.download_chapter_threading(len(chapter_list), chapter_list)
-            print('\n下载完成！')
+            self.download_chapter_threading(chapter_list)
+            print('book download complete!')
         self.output_text_and_epub()
         print(self.book_name, '本地档案合并完毕')
 
-    def progress_count(self, length):
+    @property
+    def progress_count(self):
         self.progress_bar += 1
-        print('{}/{} 进度:{:^3.0f}%'.format(self.progress_bar, length, (self.progress_bar / length) * 100), end='\r')
+        percentage = ((self.progress_bar / self.download_length) * 100)
+        return '{}/{} percentage:{:^3.0f}%'.format(self.progress_bar, self.download_length, percentage)
 
-    def thread_download_content(self, chapter_url, chapter_index, download_length):
+    def thread_download_content(self, chapter_url, chapter_index):
         self.pool_sema.acquire()
         response = API.Chapter.download_chapter(chapter_url)
         content_text = [re.sub(r'\s+|　', '', i) for i in response['chapter']['body'].split('\n') if i.strip() != '']
@@ -97,7 +102,7 @@ class Book:
         if Vars.cfg.data.get('real_time_cache'):
             with open(self.book_config, 'w', encoding='utf-8') as f:
                 json.dump(self.config_json, f, ensure_ascii=False)
-        self.progress_count(download_length)
+        print(self.progress_count, end='\r')
         self.pool_sema.release()
 
     def output_text_and_epub(self):
@@ -131,13 +136,10 @@ class Book:
 
         return self.chapter_id_list
 
-    def download_chapter_threading(self, download_length, chapter_list):
-        if download_length == 0:
-            return download_length
-
+    def download_chapter_threading(self, chapter_list):
         for index, chapter_url in enumerate(chapter_list):
             self.thread_list.append(threading.Thread(
-                target=self.thread_download_content, args=(chapter_url, chapter_url.split('/')[1], download_length,)
+                target=self.thread_download_content, args=(chapter_url, chapter_url.split('/')[1],)
             ))
 
         for thread in self.thread_list:

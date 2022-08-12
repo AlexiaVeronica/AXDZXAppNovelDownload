@@ -27,9 +27,14 @@ class Msgs:
                8: '军事', 9: '游戏', 10: '竞技', 11: '科幻', 12: '灵异', 13: '同人', 14: '轻小说'}
 
 
-def mkdir(file_path: str):
-    if not os.path.exists(file_path):
-        os.mkdir(file_path)
+def mkdir(file_path: [str, list]):
+    if isinstance(file_path, list):
+        for path in file_path:
+            makedirs(path)
+    else:
+        if not os.path.exists(file_path):
+            os.makedirs(file_path)
+        return file_path
 
 
 def makedirs(file_path: str):
@@ -93,7 +98,3 @@ def setup_config():
         config_change = True
     if config_change:
         Vars.cfg.save()
-        if not os.path.exists(Vars.cfg.data.get('save_book')):
-            mkdir(Vars.cfg.data.get('save_book'))
-        if not os.path.exists(Vars.cfg.data.get('config_book')):
-            mkdir(Vars.cfg.data.get('config_book'))
