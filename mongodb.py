@@ -16,6 +16,9 @@ class MongoDb:
     def find_data_by_id(self, book_id: str):
         return self.collection.find_one({"_id": str(book_id)})
 
+    def find_data_by_book_id(self, book_id: str):
+        return self.collection.find_one({"book_id": str(book_id)})
+
     def find_data_by_novel_finish(self, novel_finish):
         return [i for i in self.collection.find({"novel_finish": novel_finish})]
 
@@ -41,4 +44,3 @@ def img_to_base64(img_path):
         base64_data = base64.b64encode(f.read())
         s = base64_data.decode()
     return s
-
