@@ -72,10 +72,9 @@ def setup_config():
     if type(Vars.cfg.data.get('config_book')) is not str or Vars.cfg.data.get('config_book') == "":
         Vars.cfg.data['config_book'] = 'config'
         config_change = True
-    if type(Vars.cfg.data.get('max_threads')) is not int or Vars.cfg.data.get('max_threads') == "":
-        Vars.cfg.data['max_threads'] = 12
+    if not isinstance(Vars.cfg.data.get('max_threads'), int):
+        Vars.cfg.data['max_threads'] = 32
         config_change = True
-
     if type(Vars.cfg.data.get('real_time_cache')) is not bool:
         Vars.cfg.data['real_time_cache'] = False
         config_change = True
